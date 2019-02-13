@@ -1230,7 +1230,7 @@ MonoBehaviour:
     time_array: []
     file_name: 
     json_string: 
-  RecordingOn: 1
+  RecordingOn: 0
   PlaybackOn: 0
   position_list: []
   rotation_list: []
@@ -1962,6 +1962,50 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 371525798}
   m_Mesh: {fileID: 4300000, guid: 7fa2bf61b8c9b10418c720ec9112c804, type: 3}
+--- !u!1 &371730422
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 371730424}
+  - component: {fileID: 371730423}
+  m_Layer: 0
+  m_Name: MSTCreator
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &371730423
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 371730422}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 85a3e97813dda437d8783b92767b1fbc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  terrain_manager_game_object: {fileID: 1358011048}
+--- !u!4 &371730424
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 371730422}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 253.06778, y: 0.53336596, z: 232.17122}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 9
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &377003598
 GameObject:
   m_ObjectHideFlags: 0
@@ -14030,10 +14074,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 658b0de4ee3ec4f2fbc93d4ccc293929, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  terrain_manager_game_object: {fileID: 1358011048}
-  information_blackboard: {fileID: 0}
-  x_goal: 10
-  y_goal: 10
 --- !u!4 &1014425010
 Transform:
   m_ObjectHideFlags: 0
@@ -18977,7 +19017,7 @@ MonoBehaviour:
     time_array: []
     file_name: 
     json_string: 
-  RecordingOn: 1
+  RecordingOn: 0
   PlaybackOn: 0
   position_list: []
   rotation_list: []
@@ -38010,7 +38050,7 @@ MonoBehaviour:
     time_array: []
     file_name: 
     json_string: 
-  RecordingOn: 1
+  RecordingOn: 0
   PlaybackOn: 0
   position_list: []
   rotation_list: []
