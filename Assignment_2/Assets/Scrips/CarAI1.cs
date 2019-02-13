@@ -17,6 +17,8 @@ namespace UnityStandardAssets.Vehicles.Car
         public GameObject[] friends;
         public GameObject[] enemies;
 
+        public Dictionary<String, Vector3> initial_positions;
+
         private void Start()
         {
             // get the car controller
@@ -29,12 +31,53 @@ namespace UnityStandardAssets.Vehicles.Car
             friends = GameObject.FindGameObjectsWithTag("Player");
             enemies = GameObject.FindGameObjectsWithTag("Enemy");
 
+            Debug.Log(string.Format("Number of friends: {0}", friends.Length));
 
 
-            // Plan your path here
-            // ...
+            initial_positions = GetInitPos(friends);
+
+            foreach (var pos in initial_positions)
+            {
+                Debug.Log(pos.ToString());
+            }
+
         }
 
+        private Dictionary<String, Vector3> GetInitPos(GameObject[] friends)
+        {
+            Dictionary<String, Vector3> initial_positions = new Dictionary<String, Vector3>();
+
+            for (int i = 0; i < friends.Length; i++)
+            {
+                switch (friends[i].name)
+                {
+                    case "ArmedCar":
+                        initial_positions.Add(friends[i].name,
+                            new Vector3(
+                                terrain_manager.myInfo.get_x_pos(8),
+                                0f,
+                                terrain_manager.myInfo.get_z_pos(9)));
+                        break;
+                    case "ArmedCar (1)":
+                        initial_positions.Add(friends[i].name,
+                            new Vector3(
+                                terrain_manager.myInfo.get_x_pos(8),
+                                0f,
+                                terrain_manager.myInfo.get_z_pos(10)));
+                        break;
+                    case "ArmedCar (2)":
+                        initial_positions.Add(friends[i].name,
+                            new Vector3(
+                                terrain_manager.myInfo.get_x_pos(8),
+                                0f,
+                                terrain_manager.myInfo.get_z_pos(11)));
+                        break;
+                    default:
+                        break;
+                }
+            }
+            return initial_positions;
+        }
 
         private void FixedUpdate()
         {
@@ -43,15 +86,10 @@ namespace UnityStandardAssets.Vehicles.Car
             // Execute your path here
             // ...
 
-            Vector3 avg_pos = Vector3.zero;
+            Vector3 destination = initial_positions[m_Car.name];
 
-            foreach (GameObject friend in friends)
-            {
-                avg_pos += friend.transform.position;
-            }
-            avg_pos = avg_pos / friends.Length;
-            Vector3 direction = (avg_pos - transform.position).normalized;
-
+            Vector3 direction = (destination - transform.position).normalized;
+            Debug.Log(direction.y);
             bool is_to_the_right = Vector3.Dot(direction, transform.right) > 0f;
             bool is_to_the_front = Vector3.Dot(direction, transform.forward) > 0f;
 
@@ -89,7 +127,7 @@ namespace UnityStandardAssets.Vehicles.Car
 
 
             // this is how you control the car
-            Debug.Log("Steering:" + steering + " Acceleration:" + acceleration);
+            //Debug.Log("Steering:" + steering + " Acceleration:" + acceleration);
             m_Car.Move(steering, acceleration, acceleration, 0f);
             //m_Car.Move(0f, -1f, 1f, 0f);
 
