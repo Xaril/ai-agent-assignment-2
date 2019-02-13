@@ -10,6 +10,7 @@ namespace UnityStandardAssets.Vehicles.Car
     public class CarAI1 : MonoBehaviour
     {
         private CarController m_Car; // the car controller we want to use
+        
 
         public GameObject terrain_manager_game_object;
         TerrainManager terrain_manager;
@@ -21,9 +22,16 @@ namespace UnityStandardAssets.Vehicles.Car
 
         private void Start()
         {
-            // get the car controller
-            m_Car = GetComponent<CarController>();
             terrain_manager = terrain_manager_game_object.GetComponent<TerrainManager>();
+            Point startPoint = new Point((int) transform.position.x, (int) transform.position.z);
+            Point endPoint = new Point(360, 320);
+            
+            // get the car controller
+            
+            m_Car = GetComponent<CarController>();
+
+            PathGenerator p = new PathGenerator(terrain_manager);
+            p.GetPath(startPoint, endPoint, transform.rotation.eulerAngles.y);
 
 
             // note that both arrays will have holes when objects are destroyed
@@ -82,7 +90,7 @@ namespace UnityStandardAssets.Vehicles.Car
         private void FixedUpdate()
         {
 
-
+            return;
             // Execute your path here
             // ...
 
