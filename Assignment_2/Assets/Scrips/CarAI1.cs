@@ -10,8 +10,8 @@ namespace UnityStandardAssets.Vehicles.Car
     public class CarAI1 : MonoBehaviour
     {
         private CarController m_Car; // the car controller we want to use
-        
 
+        public GameObject mstCreator;
         public GameObject terrain_manager_game_object;
         TerrainManager terrain_manager;
 
@@ -19,19 +19,24 @@ namespace UnityStandardAssets.Vehicles.Car
         public GameObject[] enemies;
 
         public Dictionary<String, Vector3> initial_positions;
+        private List<Vector3> mstPath;
+        private PIDController velocityController;
+        private PIDController steeringController;
+        private int currentPathIndex = 0;
+        private float maxVelocity = 1f;
+        private GameObject emptyGO;
+        private float distanceOffset = 5f;
+        private List<Vector3> finalPath;
 
         private void Start()
         {
+            emptyGO = new GameObject();
             terrain_manager = terrain_manager_game_object.GetComponent<TerrainManager>();
-            Point startPoint = new Point((int) transform.position.x, (int) transform.position.z);
-            Point endPoint = new Point(360, 320);
-            
-            // get the car controller
-            
             m_Car = GetComponent<CarController>();
+            
 
-            PathGenerator p = new PathGenerator(terrain_manager);
-            p.GetPath(startPoint, endPoint, transform.rotation.eulerAngles.y);
+            velocityController = new VelocityController(Time.fixedDeltaTime);
+            steeringController = new SteeringController(Time.fixedDeltaTime);
 
 
             // note that both arrays will have holes when objects are destroyed
@@ -48,6 +53,16 @@ namespace UnityStandardAssets.Vehicles.Car
             {
                 Debug.Log(pos.ToString());
             }
+
+            mstPath = mstCreator.GetComponent<CreateMST>().path;
+            Point startPoint = new Point((int)transform.position.x, (int)transform.position.z);
+            Point endPoint = new Point((int)mstPath[0].x, (int)mstPath[0].z);
+
+            
+
+            PathGenerator aStar = new PathGenerator(terrain_manager);
+            List<Vector3> startPath = aStar.GetPath(startPoint, endPoint, transform.rotation.eulerAngles.y);
+            finalPath = startPath;
 
         }
 
@@ -90,7 +105,38 @@ namespace UnityStandardAssets.Vehicles.Car
         private void FixedUpdate()
         {
 
-            return;
+            if (Vector3.Distance(finalPath[currentPathIndex], transform.position) <= distanceOffset)
+            {
+                currentPathIndex++;
+                if(currentPathIndex + 3 >= finalPath.Count)
+                {
+                    finalPath = mstPath;
+                    currentPathIndex = 0;
+                }
+            }
+
+            GameObject cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            cube.transform.position = finalPath[currentPathIndex];
+            cube.GetComponent<BoxCollider>().enabled = false;
+            cube.GetComponent<MeshRenderer>().material.color = new Color(1, 0, 0);
+
+
+            /// Lazy to calculate angle between two objects, using empty object and invoking LookAt function to do that for me.
+            emptyGO.transform.position = transform.position;
+            emptyGO.transform.rotation = transform.rotation;
+            Transform t = emptyGO.transform;
+            t.LookAt(finalPath[currentPathIndex]);
+
+            float x = t.rotation.eulerAngles.y;
+            /// x - 180 for oposite ange. Moving backwards.
+            float angle = Mathf.DeltaAngle(0f, x);
+
+            /// Setting target velocity and sendind negative to footbrake to move backwards.
+            float velocity = velocityController.GetOutput(GetComponent<Rigidbody>().velocity.magnitude, maxVelocity);
+            float steering = steeringController.GetOutput(transform.rotation.eulerAngles.y, angle);
+            m_Car.Move(steering, velocity, 0f, 0f);
+
+            /*
             // Execute your path here
             // ...
 
@@ -139,7 +185,7 @@ namespace UnityStandardAssets.Vehicles.Car
             m_Car.Move(steering, acceleration, acceleration, 0f);
             //m_Car.Move(0f, -1f, 1f, 0f);
 
-
+            */
         }
     }
 }

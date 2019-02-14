@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.44657838, g: 0.49641234, b: 0.57481676, a: 1}
+  m_IndirectSpecularColor: {r: 0.44657898, g: 0.4964133, b: 0.5748178, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -1179,7 +1179,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &292624251
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1208,6 +1208,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ac0615546388c46a68ca4014cce1578b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  mstCreator: {fileID: 0}
   terrain_manager_game_object: {fileID: 1358011048}
   friends: []
   enemies: []
@@ -1991,6 +1992,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 85a3e97813dda437d8783b92767b1fbc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  path: []
   terrain_manager_game_object: {fileID: 1358011048}
 --- !u!4 &371730424
 Transform:
@@ -19135,6 +19137,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ac0615546388c46a68ca4014cce1578b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  mstCreator: {fileID: 371730422}
   terrain_manager_game_object: {fileID: 1358011048}
   friends: []
   enemies: []
@@ -37999,7 +38002,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1868622355
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -38028,6 +38031,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ac0615546388c46a68ca4014cce1578b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  mstCreator: {fileID: 0}
   terrain_manager_game_object: {fileID: 1358011048}
   friends: []
   enemies: []

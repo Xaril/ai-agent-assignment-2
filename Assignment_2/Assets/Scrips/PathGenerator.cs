@@ -12,24 +12,18 @@ public class PathGenerator
         grid = new Grid(terrain_manager);
     }
 
-    public void GetPath(Point startPoint, Point endPoint, float carangle)
+    public List<Vector3> GetPath(Point startPoint, Point endPoint, float carangle)
     {
         aStar = new AStar(grid);
         aStar.init(startPoint.x - grid.xlow, startPoint.y - grid.zlow, endPoint.x - grid.xlow, endPoint.y - grid.zlow, carangle);
         aStar.findPath();
         Debug.LogError(aStar.result.Count);
-        GameObject[] path = new GameObject[aStar.result.Count];
+        List<Vector3> path = new List<Vector3>();
         aStar.result.Reverse();
-        int i = 0;
         foreach (Node n in aStar.result)
         {
-            GameObject cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            cube.transform.position = new Vector3(startPoint.x + (n.location.x - aStar.result[0].location.x), 0.5f, startPoint.y + (n.location.y - aStar.result[0].location.y));
-            cube.GetComponent<BoxCollider>().enabled = false;
-            cube.GetComponent<MeshRenderer>().material.color = new Color(0, 0, 0);
-            //cube.GetComponent<MeshRenderer>().enabled = showTrajectoryCubes;
-            path[i] = cube;
-            i++;
+            path.Add(new Vector3(startPoint.x + (n.location.x - aStar.result[0].location.x), 0.5f, startPoint.y + (n.location.y - aStar.result[0].location.y)));
         }
+        return path;
     }
 }
