@@ -8,8 +8,12 @@ public class CreateMST : MonoBehaviour
     public List<GraphNode> cells;
     public List<List<GraphNode>> mst;
 
+    TreeST[] treeSTs;
+
+    private int n_robots;
     private int gridNoX;
     private int gridNoZ;
+    private int[] pathOf;
 
     public GameObject terrain_manager_game_object;
     TerrainManager terrain_manager;
@@ -23,11 +27,12 @@ public class CreateMST : MonoBehaviour
         cells = new List<GraphNode>();
         gridNoX = terrain_manager.myInfo.x_N;
         gridNoZ = terrain_manager.myInfo.z_N;
+        n_robots = GameObject.FindGameObjectsWithTag("Player").Length;
         for (int i = 0; i < gridNoX; ++i)
         {
             for (int j = 0; j < gridNoZ; ++j)
             {
-                cells.Add(new GraphNode(i, j, terrain_manager.myInfo.traversability[i, j] > 0.5f));
+                cells.Add(new GraphNode(i, j, terrain_manager.myInfo.traversability[i, j] > 0.5f, gridNoZ));
             }
         }
 
@@ -48,6 +53,7 @@ public class CreateMST : MonoBehaviour
         }
 
         mst = Prim();
+        MSTC();
     }
 
     void FixedUpdate()
@@ -119,10 +125,10 @@ public class CreateMST : MonoBehaviour
         List<GraphNode> startNeighbours = graph[startNodeIndex];
         foreach (GraphNode neighbour in startNeighbours)
         {
-            if (!addedToRemaining[neighbour.i * gridNoZ + neighbour.j])
+            if (!addedToRemaining[neighbour.ij])
             {
                 remaining.Add(neighbour);
-                addedToRemaining[neighbour.i * gridNoZ + neighbour.j] = true;
+                addedToRemaining[neighbour.ij] = true;
             }
         }
 
@@ -133,31 +139,73 @@ public class CreateMST : MonoBehaviour
             GraphNode node = remaining[randomIndex];
             remaining.RemoveAt(randomIndex);
 
-            List<GraphNode> neighbours = graph[node.i * gridNoZ + node.j];
+            List<GraphNode> neighbours = graph[node.ij];
             bool addedToTree = false;
             foreach(GraphNode neighbour in neighbours)
             {
                 //Find node in tree that this node is connected to
-                if(inTree[neighbour.i * gridNoZ + neighbour.j] && !addedToTree)
+                if(inTree[neighbour.ij] && !addedToTree)
                 {
                     //Add this node to the tree
                     addedToTree = true;
-                    inTree[node.i * gridNoZ + node.j] = true;
+                    inTree[node.ij] = true;
 
-                    tree[node.i * gridNoZ + node.j].Add(neighbour);
-                    tree[neighbour.i * gridNoZ + neighbour.j].Add(node);
+                    tree[node.ij].Add(neighbour);
+                    tree[neighbour.ij].Add(node);
                 }
 
                 //Add its neighbours to the list
-                if (!addedToRemaining[neighbour.i * gridNoZ + neighbour.j])
+                if (!addedToRemaining[neighbour.ij])
                 {
                     remaining.Add(neighbour);
-                    addedToRemaining[neighbour.i * gridNoZ + neighbour.j] = true;
+                    addedToRemaining[neighbour.ij] = true;
                 }
             }
         }
 
         return tree;
+    }
+
+    public void MSTC() // Work in progress
+    {
+        // Initializiation
+        List<int[]> starting_positions = new List<int[]> {
+            new int[] {8, 9},
+            new int[] {8, 10},
+            new int[] {8, 11}
+        };
+     
+        pathOf = new int[cells.Count]; // Indicates to which robot's path a cell belongs to
+        for (int i = 0; i < pathOf.Length; i++)
+        {
+            pathOf[i] = -1;
+        }
+        
+        treeSTs = new TreeST[n_robots];
+
+        for (int i = 0; i < n_robots; i++)
+        {
+            GraphNode starting_node = GetGraphNode(starting_positions[i][0], starting_positions[i][1]);
+            treeSTs[i] = new TreeST(new NodeST(starting_node));
+            pathOf[Get1Dindex(starting_positions[i][0], starting_positions[i][1])] = i;
+        }
+        // End initialization
+
+        //for (int i = 0; i < n_robots; i++)
+        //{
+            
+        //}
+
+    }
+
+    private int Get1Dindex(int i, int j)
+    {
+        return i * gridNoZ + j;
+    }
+
+    private GraphNode GetGraphNode(int i, int j)
+    {
+        return cells[Get1Dindex(i,j)];
     }
 
     private void OnDrawGizmos()
@@ -195,5 +243,28 @@ public class CreateMST : MonoBehaviour
                 Gizmos.DrawLine(new Vector3(x, 1, z), new Vector3(nX, 1, nZ));
             }
         }
+
+        Color[] robot_colors = new Color[]
+        {
+            Color.red, Color.blue, Color.yellow
+        };
+
+        // Printing robots'paths (hardcoded for 3 robots)
+        for (int cell = 0; cell < pathOf.Length; cell++)
+        {
+            if(pathOf[cell] == -1)
+            {
+                continue;
+            }
+
+            float x = terrain_manager.myInfo.get_x_pos(cells[cell].i);
+            float z = terrain_manager.myInfo.get_z_pos(cells[cell].j);
+
+            Gizmos.color = robot_colors[pathOf[cell]];
+
+            Gizmos.DrawCube(new Vector3(x, 2f, z), new Vector3(2f, 2f, 2f));
+
+        }
+
     }
 }
