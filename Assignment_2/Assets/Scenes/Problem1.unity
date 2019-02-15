@@ -1179,7 +1179,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &292624251
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1203,12 +1203,12 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 292624250}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ac0615546388c46a68ca4014cce1578b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  mstCreator: {fileID: 0}
+  mstCreator: {fileID: 371730422}
   terrain_manager_game_object: {fileID: 1358011048}
   friends: []
   enemies: []
@@ -1994,7 +1994,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 85a3e97813dda437d8783b92767b1fbc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  path: []
   terrain_manager_game_object: {fileID: 1358011048}
 --- !u!4 &371730424
 Transform:
@@ -38006,7 +38005,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &1868622355
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -38030,12 +38029,12 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1868622354}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ac0615546388c46a68ca4014cce1578b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  mstCreator: {fileID: 0}
+  mstCreator: {fileID: 371730422}
   terrain_manager_game_object: {fileID: 1358011048}
   friends: []
   enemies: []
