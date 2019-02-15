@@ -41,14 +41,7 @@ namespace UnityStandardAssets.Vehicles.Car
 
             Debug.Log(string.Format("Number of friends: {0}", friends.Length));
 
-
             initial_positions = GetInitPos(friends);
-
-            foreach (var pos in initial_positions)
-            {
-                Debug.Log(pos.ToString());
-            }
-
         }
 
         private Dictionary<String, Vector3> GetInitPos(GameObject[] friends)
@@ -57,6 +50,7 @@ namespace UnityStandardAssets.Vehicles.Car
 
             for (int i = 0; i < friends.Length; i++)
             {
+                Debug.Log(string.Format("Car name: {0}", friends[i].name));
                 switch (friends[i].name)
                 {
                     case "ArmedCar":

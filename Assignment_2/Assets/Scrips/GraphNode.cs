@@ -16,4 +16,17 @@ public class GraphNode
         this.ij = n_columns * i + j;
         this.obstacle = obstacle;
     }
+
+    public override bool Equals(object obj)
+    {
+        var node = obj as GraphNode;
+        return node != null &&
+               ij == node.ij;
+    }
+
+    public string ToString()
+    {
+        return string.Format("({0}, {1}) -> {2}", i, j, ij);
+    }
+
 }

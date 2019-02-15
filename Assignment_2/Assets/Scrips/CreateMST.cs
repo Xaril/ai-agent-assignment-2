@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -182,22 +183,150 @@ public class CreateMST : MonoBehaviour
         }
         
         treeSTs = new TreeST[n_robots];
+        List<List<GraphNode>> remaining_for_robot = new List<List<GraphNode>>();
+        bool[][] addedToRemaining = new bool[n_robots][];
 
-        for (int i = 0; i < n_robots; i++)
+        for (int robot = 0; robot < n_robots; robot++)
         {
-            GraphNode starting_node = GetGraphNode(starting_positions[i][0], starting_positions[i][1]);
-            treeSTs[i] = new TreeST(new NodeST(starting_node));
-            pathOf[Get1Dindex(starting_positions[i][0], starting_positions[i][1])] = i;
+            addedToRemaining[robot] = new bool[cells.Count];
+            remaining_for_robot.Add(new List<GraphNode>());
+        }
+
+        for (int robot = 0; robot < n_robots; robot++)
+        {
+            GraphNode starting_node = GetGraphNode(starting_positions[robot][0], starting_positions[robot][1]);
+            treeSTs[robot] = new TreeST(new NodeST(starting_node));
+            pathOf[Get1Dindex(starting_positions[robot][0], starting_positions[robot][1])] = robot;
+
+            addNeighbours(starting_node, addedToRemaining, remaining_for_robot, robot);
+
+            for (int i = 0; i < n_robots; i++)
+            {
+                addedToRemaining[i][starting_node.ij] = true;
+                remaining_for_robot[i].Remove(starting_node);
+            }
         }
         // End initialization
 
-        //for (int i = 0; i < n_robots; i++)
-        //{
-            
-        //}
-
+        // Computes the a tree for each robot
+        for (int iteration = 0; iteration < 200; iteration++)
+        {
+            for (int robot = 0; robot < n_robots; robot++)
+            {
+                if (remaining_for_robot[robot].Count == 0)
+                {
+                    // Tree cannot be expanded anymore
+                    continue;
+                }
+                Debug.Log(string.Format("Robot: {0}", robot));
+                // For each remaining cell, pick the one farthest from other robots'paths
+                float best_min_dist = float.NegativeInfinity; // The bigger, the better
+                GraphNode best_node = null;
+                foreach (var remaining_node in remaining_for_robot[robot])
+                {
+                    Debug.Log(string.Format("{0}", remaining_node.ToString()));
+                    // At the moment we use ManhattanDistance (doesn't take obstacles into accout)
+                    // We could try BFS
+                    float min_dist = ComputeMinManhattanDistance(remaining_node, robot);
+                    if (min_dist > best_min_dist)
+                    {
+                        best_min_dist = min_dist;
+                        best_node = remaining_node;
+                    }
+                }
+                // Remove this best candidate from all the remaining lists and block it
+                for (int i = 0; i < n_robots; i++)
+                {
+                    Debug.Log(string.Format("Len before remove: {0}", remaining_for_robot[i].Count));
+                    remaining_for_robot[i].Remove(best_node);
+                    Debug.Log(string.Format("Len after remove: {0}", remaining_for_robot[i].Count));
+                    addedToRemaining[i][best_node.ij] = true;
+                }
+                addNeighbours(best_node, addedToRemaining, remaining_for_robot, robot);
+                pathOf[best_node.ij] = robot;
+            }
+        }
     }
 
+    private int ComputeMinManhattanDistance(GraphNode remaining_node, int robot)
+    {
+        int i = remaining_node.i, j = remaining_node.j;
+        int i_check, j_check, ij_check;
+        
+
+        for (int manhattan_radius = 0; manhattan_radius < gridNoZ+gridNoX; manhattan_radius++)
+        {
+            for (int k = 0; k <= manhattan_radius; k++)
+            {
+                i_check = i - manhattan_radius;
+                j_check = j - manhattan_radius + k;
+                ij_check = Get1Dindex(i_check, j_check);
+                if (IsValid(i_check, j_check))
+                {
+                    if(pathOf[ij_check] != -1 && pathOf[ij_check] != robot)
+                    {
+                        Debug.Log(string.Format("Robot: {0}\ti: {1}\tj: {2}",
+                            robot, i_check, j_check));
+                        return manhattan_radius;
+                    }
+                }
+                i_check = i - manhattan_radius + k;
+                j_check = j + manhattan_radius;
+                ij_check = Get1Dindex(i_check, j_check);
+                if (IsValid(i_check, j_check))
+                {
+                    if (pathOf[ij_check] != -1 && pathOf[ij_check] != robot)
+                    {
+                        Debug.Log(string.Format("Robot: {0}\ti: {1}\tj: {2}",
+                             robot, i_check, j_check));
+                        return manhattan_radius;
+                    }
+                }
+                i_check = i + manhattan_radius;
+                j_check = j + manhattan_radius - k;
+                ij_check = Get1Dindex(i_check, j_check);
+                if (IsValid(i_check, j_check))
+                {
+                    if (pathOf[ij_check] != -1 && pathOf[ij_check] != robot)
+                    {
+                        Debug.Log(string.Format("Robot: {0}\ti: {1}\tj: {2}",
+                             robot, i_check, j_check));
+                        return manhattan_radius;
+                    }
+                }
+                i_check = i + manhattan_radius - k;
+                j_check = j - manhattan_radius;
+                ij_check = Get1Dindex(i_check, j_check);
+                if (IsValid(i_check, j_check))
+                {
+                    if (pathOf[ij_check] != -1 && pathOf[ij_check] != robot)
+                    {
+                        Debug.Log(string.Format("Robot: {0}\ti: {1}\tj: {2}",
+                             robot, i_check, j_check));
+                        return manhattan_radius;
+                    }
+                }
+            }
+        }
+        // This should never be executed
+        Debug.Log("Oh No! Your code it's not working properly! :(");
+
+        return -1; 
+    }
+
+    private void addNeighbours(GraphNode node, bool[][] addedToRemaining, List<List<GraphNode>> remaining_for_robot, int robot)
+    {
+        List<GraphNode> neighbours = graph[node.ij];
+        foreach (var neighbor in neighbours)
+        {
+            if (!addedToRemaining[robot][neighbor.ij] && pathOf[neighbor.ij] == -1)
+            {
+                remaining_for_robot[robot].Add(neighbor);
+                addedToRemaining[robot][neighbor.ij] = true;
+            }
+        }
+    }
+    
     private int Get1Dindex(int i, int j)
     {
         return i * gridNoZ + j;
@@ -206,6 +335,27 @@ public class CreateMST : MonoBehaviour
     private GraphNode GetGraphNode(int i, int j)
     {
         return cells[Get1Dindex(i,j)];
+    }
+    
+
+
+    private bool IsValid(int i, int j)
+    {
+        if (i < 0 || i >= gridNoZ || j < 0 || j >= gridNoX)
+        {
+            return false;
+        }
+        if (IsObstacle(i, j))
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    private bool IsObstacle(int i, int j)
+    {
+        return terrain_manager.myInfo.traversability[i, j] > 0.5f;
     }
 
     private void OnDrawGizmos()
@@ -246,10 +396,12 @@ public class CreateMST : MonoBehaviour
 
         Color[] robot_colors = new Color[]
         {
-            Color.red, Color.blue, Color.yellow
+            Color.red, Color.blue, Color.black
         };
 
         // Printing robots'paths (hardcoded for 3 robots)
+        float cube_side = 8f;
+        Vector3 cube_size = new Vector3(cube_side, cube_side, cube_side);
         for (int cell = 0; cell < pathOf.Length; cell++)
         {
             if(pathOf[cell] == -1)
@@ -262,7 +414,7 @@ public class CreateMST : MonoBehaviour
 
             Gizmos.color = robot_colors[pathOf[cell]];
 
-            Gizmos.DrawCube(new Vector3(x, 2f, z), new Vector3(2f, 2f, 2f));
+            Gizmos.DrawCube(new Vector3(x, 2f, z), cube_size);
 
         }
 
