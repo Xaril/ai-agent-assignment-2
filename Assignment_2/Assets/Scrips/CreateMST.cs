@@ -10,6 +10,7 @@ public class CreateMST : MonoBehaviour
     public List<List<GraphNode>> mst;
 
     TreeST[] treeSTs;
+    public List<Vector3> path;
 
     private int n_robots;
     private int gridNoX;
@@ -54,12 +55,12 @@ public class CreateMST : MonoBehaviour
         }
 
         mst = Prim();
+        FindPaths();
         MSTC();
     }
 
     void FixedUpdate()
     {
-        
     }
 
     public List<GraphNode> FindCellNeighbours(int i, int j)
@@ -356,6 +357,142 @@ public class CreateMST : MonoBehaviour
     private bool IsObstacle(int i, int j)
     {
         return terrain_manager.myInfo.traversability[i, j] > 0.5f;
+    }
+
+    public void FindPaths()
+    {
+        path = new List<Vector3>();
+        Vector3[,] grid = new Vector3[2 * gridNoX, 2 * gridNoZ];
+        float gridLength = (terrain_manager.myInfo.x_high - terrain_manager.myInfo.x_low) / terrain_manager.myInfo.x_N;
+        bool[,] visited = new bool[2 * gridNoX, 2 * gridNoZ];
+        int checkedNodes = 0;
+        int numberOfNodesToCheck = 4 * gridNoX * gridNoZ;
+        for (int i = 0; i < gridNoX; ++i)
+        {
+            for(int j = 0; j < gridNoZ; ++j)
+            {
+                Vector3 bigPosition = new Vector3(
+                    terrain_manager.myInfo.get_x_pos(i),
+                    0,
+                    terrain_manager.myInfo.get_z_pos(j)
+                );
+                grid[2 * i, 2 * j] = bigPosition + new Vector3(
+                    -gridLength / 4,
+                    0,
+                    -gridLength / 4
+                );
+                grid[2 * i + 1, 2 * j] = bigPosition + new Vector3(
+                    gridLength / 4,
+                    0,
+                    -gridLength / 4
+                );
+                grid[2 * i, 2 * j + 1] = bigPosition + new Vector3(
+                    -gridLength / 4,
+                    0,
+                    gridLength / 4
+                );
+                grid[2 * i + 1, 2 * j + 1] = bigPosition + new Vector3(
+                    gridLength / 4,
+                    0,
+                    gridLength / 4
+                );
+                if(terrain_manager.myInfo.traversability[i, j] > 0.5f)
+                {
+                    visited[2 * i, 2 * j] = true;
+                    visited[2 * i + 1, 2 * j] = true;
+                    visited[2 * i, 2 * j + 1] = true;
+                    visited[2 * i + 1, 2 * j + 1] = true;
+                    checkedNodes += 4;
+                }
+            }
+        }
+
+        int cellI = 0;
+        int cellJ = 0;
+        do
+        {
+            cellI = Random.Range(0, 2 * gridNoX - 1);
+            cellJ = Random.Range(0, 2 * gridNoZ - 1);
+        } while (visited[cellI, cellJ]);
+
+        while (checkedNodes < numberOfNodesToCheck)
+        {
+            path.Add(grid[cellI, cellJ]);
+            checkedNodes++;
+            visited[cellI, cellJ] = true;
+
+            int bigGridI = cellI / 2;
+            int bigGridJ = cellJ / 2;
+
+            if(cellI % 2 == 0 && cellJ % 2 == 0)
+            {
+                bool foundWall = false;
+                foreach(GraphNode node in mst[Get1Dindex(bigGridI, bigGridJ)])
+                {
+                    if(node.i < bigGridI)
+                    {
+                        cellI--;
+                        foundWall = true;
+                        break;
+                    }
+                }
+                if(!foundWall)
+                {
+                    cellJ++;
+                }
+            } 
+            else if(cellI % 2 == 0 && cellJ % 2 == 1)
+            {
+                bool foundWall = false;
+                foreach (GraphNode node in mst[Get1Dindex(bigGridI, bigGridJ)])
+                {
+                    if (node.j > bigGridJ)
+                    {
+                        cellJ++;
+                        foundWall = true;
+                        break;
+                    }
+                }
+                if (!foundWall)
+                {
+                    cellI++;
+                }
+            }
+            else if (cellI % 2 == 1 && cellJ % 2 == 1)
+            {
+                bool foundWall = false;
+                foreach (GraphNode node in mst[Get1Dindex(bigGridI, bigGridJ)])
+                {
+                    if (node.i > bigGridI)
+                    {
+                        cellI++;
+                        foundWall = true;
+                        break;
+                    }
+                }
+                if (!foundWall)
+                {
+                    cellJ--;
+                }
+            }
+            else if (cellI % 2 == 1 && cellJ % 2 == 0)
+            {
+                bool foundWall = false;
+                foreach (GraphNode node in mst[Get1Dindex(bigGridI, bigGridJ)])
+                {
+                    if (node.j < bigGridJ)
+                    {
+                        cellJ--;
+                        foundWall = true;
+                        break;
+                    }
+                }
+                if (!foundWall)
+                {
+                    cellI--;
+                }
+            }
+        }
     }
 
     private void OnDrawGizmos()
