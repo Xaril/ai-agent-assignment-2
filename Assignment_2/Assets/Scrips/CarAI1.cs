@@ -20,23 +20,52 @@ namespace UnityStandardAssets.Vehicles.Car
 
         public Dictionary<String, Vector3> initial_positions;
         private List<Vector3> mstPath;
-        private PIDController velocityController;
-        private PIDController steeringController;
         private int currentPathIndex = 0;
-        private float maxVelocity = 1f;
-        private GameObject emptyGO;
         private float distanceOffset = 5f;
         private List<Vector3> finalPath;
 
+        public float maxVelocity;
+        public float acceleration;
+        private float timeStep;
+        private int numberOfSteps;
+        private float time;
+
+        private float steerDirection;
+        private float accelerationDirection;
+        private float brake;
+        private float handBrake;
+
+        private bool crashed;
+        private float crashTime;
+        private float crashCheckTime;
+        private float crashDirection;
+        private Vector3 previousPosition;
+        private ConfigurationSpace configurationSpace;
+
         private void Start()
         {
-            emptyGO = new GameObject();
+            Time.timeScale = 1;
+            maxVelocity = 150;
+            acceleration = 1f;
+
+            timeStep = 0.05f;
+            numberOfSteps = 5;
+            time = 0;
+
+            steerDirection = 0;
+            accelerationDirection = 0;
+            brake = 0;
+            handBrake = 0;
+            crashed = false;
+            crashTime = 0;
+            crashCheckTime = 0.5f;
+            crashDirection = 0;
+            previousPosition = Vector3.up;
+
             terrain_manager = terrain_manager_game_object.GetComponent<TerrainManager>();
             m_Car = GetComponent<CarController>();
-            
 
-            velocityController = new VelocityController(Time.fixedDeltaTime);
-            steeringController = new SteeringController(Time.fixedDeltaTime);
+            InitializeCSpace();
 
 
             // note that both arrays will have holes when objects are destroyed
@@ -115,77 +144,147 @@ namespace UnityStandardAssets.Vehicles.Car
                 }
             }
 
-            GameObject cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            cube.transform.position = finalPath[currentPathIndex];
-            cube.GetComponent<BoxCollider>().enabled = false;
-            cube.GetComponent<MeshRenderer>().material.color = new Color(1, 0, 0);
-
-
-            /// Lazy to calculate angle between two objects, using empty object and invoking LookAt function to do that for me.
-            emptyGO.transform.position = transform.position;
-            emptyGO.transform.rotation = transform.rotation;
-            Transform t = emptyGO.transform;
-            t.LookAt(finalPath[currentPathIndex]);
-
-            float x = t.rotation.eulerAngles.y;
-            /// x - 180 for oposite ange. Moving backwards.
-            float angle = Mathf.DeltaAngle(0f, x);
-
-            /// Setting target velocity and sendind negative to footbrake to move backwards.
-            float velocity = velocityController.GetOutput(GetComponent<Rigidbody>().velocity.magnitude, maxVelocity);
-            float steering = steeringController.GetOutput(transform.rotation.eulerAngles.y, angle);
-            m_Car.Move(steering, velocity, 0f, 0f);
-
-            /*
-            // Execute your path here
-            // ...
-
-            Vector3 destination = initial_positions[m_Car.name];
-
-            Vector3 direction = (destination - transform.position).normalized;
-            Debug.Log(direction.y);
-            bool is_to_the_right = Vector3.Dot(direction, transform.right) > 0f;
-            bool is_to_the_front = Vector3.Dot(direction, transform.forward) > 0f;
-
-            float steering = 0f;
-            float acceleration = 0;
-
-            if (is_to_the_right && is_to_the_front)
+            if (!crashed)
             {
-                steering = 1f;
-                acceleration = 1f;
+                time += Time.deltaTime;
+                if (time >= crashCheckTime && Vector3.Distance(m_Car.transform.position, terrain_manager.myInfo.start_pos) > 5)
+                {
+                    time = 0;
+                    if (Vector3.Distance(previousPosition, m_Car.transform.position) < 0.1f)
+                    {
+                        crashed = true;
+                        if (Physics.BoxCast(
+                            m_Car.transform.position,
+                            new Vector3(configurationSpace.BoxSize.x / 2, configurationSpace.BoxSize.y / 2, 0.5f),
+                            m_Car.transform.forward,
+                            Quaternion.LookRotation(m_Car.transform.forward),
+                            configurationSpace.BoxSize.z / 2
+                        ))
+                        {
+                            crashDirection = -1;
+                        }
+                        else
+                        {
+                            crashDirection = 1;
+                        }
+
+                    }
+                    else
+                    {
+                        previousPosition = m_Car.transform.position;
+                    }
+                }
+                steerDirection = SteerInput(m_Car.transform.position, m_Car.transform.eulerAngles.y, finalPath[currentPathIndex]);
+                if (Mathf.Abs(steerDirection) < 0.2f)
+                {
+                    steerDirection = 0;
+                }
+                brake = 0;
+                if (Mathf.Abs(steerDirection) > 0.8f && m_Car.CurrentSpeed > maxVelocity / 10)
+                {
+                    accelerationDirection = 0;
+                    if (m_Car.CurrentSpeed > maxVelocity / 5)
+                    {
+                        handBrake = 1;
+                    }
+                    else
+                    {
+                        handBrake = 0;
+                    }
+                }
+                else
+                {
+                    accelerationDirection = AccelerationInput(m_Car.transform.position, m_Car.transform.eulerAngles.y, finalPath[currentPathIndex]);
+                    handBrake = 0;
+                }
+                if (currentPathIndex < finalPath.Count - 1)
+                {
+                    int stepsToCheck = Mathf.Min(3 + (int)(m_Car.CurrentSpeed * 1.6f * 1.6f * m_Car.CurrentSpeed / 500), finalPath.Count - 1 - currentPathIndex);
+                    for (int i = 1; i <= stepsToCheck; ++i)
+                    {
+                        float steerCheck = SteerInput(m_Car.transform.position, m_Car.transform.eulerAngles.y, finalPath[currentPathIndex + i]);
+                        if (Mathf.Abs(steerCheck) > 0.8f && (m_Car.CurrentSpeed * 1.6f * 1.6f * m_Car.CurrentSpeed) >= Vector3.Distance(m_Car.transform.position, finalPath[currentPathIndex + i]) * 125 * 0.8f)
+                        {
+                            accelerationDirection = 0;
+                            brake = 1;
+                            break;
+                        }
+                    }
+                }
+
+                if (m_Car.CurrentSpeed >= maxVelocity)
+                {
+                    accelerationDirection = 0;
+                }
+
+                if (accelerationDirection < 0)
+                {
+                    m_Car.Move(-steerDirection, brake, accelerationDirection * acceleration, handBrake);
+                }
+                else
+                {
+                    m_Car.Move(steerDirection, accelerationDirection * acceleration, -brake, handBrake);
+                }
             }
-            else if (is_to_the_right && !is_to_the_front)
+            else
             {
-                steering = -1f;
-                acceleration = -1f;
+                crashTime += Time.deltaTime;
+                if (crashTime <= 1f)
+                {
+                    steerDirection = SteerInput(m_Car.transform.position, m_Car.transform.eulerAngles.y, finalPath[currentPathIndex]);
+                    if (crashDirection > 0)
+                    {
+                        m_Car.Move(steerDirection, acceleration, 0, 0);
+                    }
+                    else
+                    {
+                        m_Car.Move(-steerDirection, 0, -acceleration, 0);
+                    }
+                }
+                else
+                {
+                    crashTime = 0;
+                    crashed = false;
+                }
             }
-            else if (!is_to_the_right && is_to_the_front)
+        }
+
+        //Determines steer angle for the car
+        private float SteerInput(Vector3 position, float theta, Vector3 point)
+        {
+            Vector3 direction = Quaternion.Euler(0, theta, 0) * Vector3.forward;
+            Vector3 directionToPoint = point - position;
+            float angle = Vector3.Angle(direction, directionToPoint) * Mathf.Sign(-direction.x * directionToPoint.z + direction.z * directionToPoint.x);
+            float steerAngle = Mathf.Clamp(angle, -m_Car.m_MaximumSteerAngle, m_Car.m_MaximumSteerAngle) / m_Car.m_MaximumSteerAngle;
+            return steerAngle;
+        }
+
+        //Determines acceleration for the car
+        private float AccelerationInput(Vector3 position, float theta, Vector3 point)
+        {
+            Vector3 direction = Quaternion.Euler(0, theta, 0) * Vector3.forward;
+            Vector3 directionToPoint = point - position;
+            return Mathf.Clamp(direction.x * directionToPoint.x + direction.z * directionToPoint.z, -1, 1);
+        }
+
+        //Get size of car collider to be used with C space
+        private void InitializeCSpace()
+        {
+            Quaternion carRotation = m_Car.transform.rotation;
+            m_Car.transform.rotation = Quaternion.identity;
+            configurationSpace = new ConfigurationSpace();
+            BoxCollider carCollider = GameObject.Find("ColliderBottom").GetComponent<BoxCollider>();
+            configurationSpace.BoxSize = carCollider.transform.TransformVector(carCollider.size);
+            m_Car.transform.rotation = carRotation;
+        }
+
+        private void OnDrawGizmos()
+        {
+            Gizmos.color = Color.red;
+            for(int i = 0; i <= currentPathIndex; ++i)
             {
-                steering = -1f;
-                acceleration = 1f;
+                Gizmos.DrawCube(finalPath[i], Vector3.one);
             }
-            else if (!is_to_the_right && !is_to_the_front)
-            {
-                steering = 1f;
-                acceleration = -1f;
-            }
-
-            // this is how you access information about the terrain
-            int i = terrain_manager.myInfo.get_i_index(transform.position.x);
-            int j = terrain_manager.myInfo.get_j_index(transform.position.z);
-            float grid_center_x = terrain_manager.myInfo.get_x_pos(i);
-            float grid_center_z = terrain_manager.myInfo.get_z_pos(j);
-
-            Debug.DrawLine(transform.position, new Vector3(grid_center_x, 0f, grid_center_z));
-
-
-            // this is how you control the car
-            //Debug.Log("Steering:" + steering + " Acceleration:" + acceleration);
-            m_Car.Move(steering, acceleration, acceleration, 0f);
-            //m_Car.Move(0f, -1f, 1f, 0f);
-
-            */
         }
     }
 }
