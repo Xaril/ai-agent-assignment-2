@@ -168,7 +168,7 @@ public class CreateMST : MonoBehaviour
         return tree;
     }
 
-    public void MSTC() // Work in progress
+    public List<List<GraphNode>>[] MSTC() // Work in progress
     {
         // Initializiation
         List<int[]> starting_positions = new List<int[]> {
@@ -176,14 +176,24 @@ public class CreateMST : MonoBehaviour
             new int[] {8, 10},
             new int[] {8, 11}
         };
-     
+
+        // Returned value
+        List<List<GraphNode>>[] all_trees = new List<List<GraphNode>>[n_robots];
+        for (int robot = 0; robot < n_robots; robot++)
+        {
+            all_trees[robot] = new List<List<GraphNode>>();
+            for (int i = 0; i < cells.Count; ++i)
+            {
+                all_trees[robot].Add(new List<GraphNode>());
+            }
+        }
+
         pathOf = new int[cells.Count]; // Indicates to which robot's path a cell belongs to
         for (int i = 0; i < pathOf.Length; i++)
         {
             pathOf[i] = -1;
         }
         
-        treeSTs = new TreeST[n_robots];
         List<List<GraphNode>> remaining_for_robot = new List<List<GraphNode>>();
         bool[][] addedToRemaining = new bool[n_robots][];
 
@@ -196,7 +206,7 @@ public class CreateMST : MonoBehaviour
         for (int robot = 0; robot < n_robots; robot++)
         {
             GraphNode starting_node = GetGraphNode(starting_positions[robot][0], starting_positions[robot][1]);
-            treeSTs[robot] = new TreeST(new NodeST(starting_node));
+
             pathOf[Get1Dindex(starting_positions[robot][0], starting_positions[robot][1])] = robot;
 
             addNeighbours(starting_node, addedToRemaining, remaining_for_robot, robot);
@@ -245,8 +255,29 @@ public class CreateMST : MonoBehaviour
                 }
                 addNeighbours(best_node, addedToRemaining, remaining_for_robot, robot);
                 pathOf[best_node.ij] = robot;
+                // Find parent
+                GraphNode parent = FindParent(best_node, robot);
+                all_trees[robot][best_node.ij].Add(parent);
+                all_trees[robot][parent.ij].Add(best_node);
             }
         }
+
+        return all_trees;
+    }
+
+    private GraphNode FindParent(GraphNode node, int robot)
+    {
+        List<GraphNode> neighbours = graph[node.ij];
+
+        foreach (var neighbor in neighbours)
+        {
+            if (pathOf[neighbor.ij] == robot)
+            {
+                return neighbor;
+            }
+        }
+        Debug.Log("This should never happen D: Check FindParent()");
+        return null;
     }
 
     private int ComputeMinManhattanDistance(GraphNode remaining_node, int robot)
@@ -411,8 +442,8 @@ public class CreateMST : MonoBehaviour
         int cellJ = 0;
         do
         {
-            cellI = Random.Range(0, 2 * gridNoX - 1);
-            cellJ = Random.Range(0, 2 * gridNoZ - 1);
+            cellI = UnityEngine.Random.Range(0, 2 * gridNoX - 1);
+            cellJ = UnityEngine.Random.Range(0, 2 * gridNoZ - 1);
         } while (visited[cellI, cellJ]);
 
         while (checkedNodes < numberOfNodesToCheck)

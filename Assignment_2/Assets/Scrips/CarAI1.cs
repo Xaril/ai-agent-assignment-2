@@ -280,9 +280,17 @@ namespace UnityStandardAssets.Vehicles.Car
 
         private void OnDrawGizmos()
         {
+            if (!Application.isPlaying)
+            {
+                return;
+            }
             Gizmos.color = Color.red;
             for(int i = 0; i <= currentPathIndex; ++i)
             {
+                if (finalPath[i] != null)
+                {
+                    continue;
+                }
                 Gizmos.DrawCube(finalPath[i], Vector3.one);
             }
         }
