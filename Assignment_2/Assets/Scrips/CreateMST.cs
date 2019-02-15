@@ -7,10 +7,10 @@ public class CreateMST : MonoBehaviour
 {
     public List<List<GraphNode>> graph;
     public List<GraphNode> cells;
-    public List<List<GraphNode>> mst;
+    public List<List<GraphNode>>[] MSTs;
 
     TreeST[] treeSTs;
-    public List<Vector3> path;
+    public List<Vector3>[] paths;
 
     private int n_robots;
     private int gridNoX;
@@ -54,9 +54,8 @@ public class CreateMST : MonoBehaviour
             }
         }
 
-        mst = Prim();
+        MSTs = MSTC();
         FindPaths();
-        MSTC();
     }
 
     void FixedUpdate()
@@ -392,15 +391,13 @@ public class CreateMST : MonoBehaviour
 
     public void FindPaths()
     {
-        path = new List<Vector3>();
+        paths = new List<Vector3>[n_robots];
         Vector3[,] grid = new Vector3[2 * gridNoX, 2 * gridNoZ];
         float gridLength = (terrain_manager.myInfo.x_high - terrain_manager.myInfo.x_low) / terrain_manager.myInfo.x_N;
         bool[,] visited = new bool[2 * gridNoX, 2 * gridNoZ];
-        int checkedNodes = 0;
-        int numberOfNodesToCheck = 4 * gridNoX * gridNoZ;
         for (int i = 0; i < gridNoX; ++i)
         {
-            for(int j = 0; j < gridNoZ; ++j)
+            for (int j = 0; j < gridNoZ; ++j)
             {
                 Vector3 bigPosition = new Vector3(
                     terrain_manager.myInfo.get_x_pos(i),
@@ -427,105 +424,118 @@ public class CreateMST : MonoBehaviour
                     0,
                     gridLength / 4
                 );
-                if(terrain_manager.myInfo.traversability[i, j] > 0.5f)
+                if (terrain_manager.myInfo.traversability[i, j] > 0.5f)
                 {
                     visited[2 * i, 2 * j] = true;
                     visited[2 * i + 1, 2 * j] = true;
                     visited[2 * i, 2 * j + 1] = true;
                     visited[2 * i + 1, 2 * j + 1] = true;
-                    checkedNodes += 4;
                 }
             }
         }
 
-        int cellI = 0;
-        int cellJ = 0;
-        do
+
+        for (int i = 0; i < n_robots; ++i)
         {
-            cellI = UnityEngine.Random.Range(0, 2 * gridNoX - 1);
-            cellJ = UnityEngine.Random.Range(0, 2 * gridNoZ - 1);
-        } while (visited[cellI, cellJ]);
-
-        while (checkedNodes < numberOfNodesToCheck)
-        {
-            path.Add(grid[cellI, cellJ]);
-            checkedNodes++;
-            visited[cellI, cellJ] = true;
-
-            int bigGridI = cellI / 2;
-            int bigGridJ = cellJ / 2;
-
-            if(cellI % 2 == 0 && cellJ % 2 == 0)
+            int checkedNodes = 0;
+            int numberOfNodesToCheck = 0;
+            for(int j = 0; j < MSTs[i].Count; ++j)
             {
-                bool foundWall = false;
-                foreach(GraphNode node in mst[Get1Dindex(bigGridI, bigGridJ)])
+                if(MSTs[i][j].Count > 0)
                 {
-                    if(node.i < bigGridI)
+                    numberOfNodesToCheck+=4;
+                }
+            }
+
+            paths[i] = new List<Vector3>();
+            int cellI = 0;
+            int cellJ = 0;
+            do
+            {
+                cellI = UnityEngine.Random.Range(0, 2 * gridNoX - 1);
+                cellJ = UnityEngine.Random.Range(0, 2 * gridNoZ - 1);
+            } while (/*visited[cellI, cellJ] &&*/ pathOf[Get1Dindex(cellI/2, cellJ/2)] != i);
+
+            while (checkedNodes < numberOfNodesToCheck)
+            {
+                paths[i].Add(grid[cellI, cellJ]);
+                checkedNodes++;
+                visited[cellI, cellJ] = true;
+
+                int bigGridI = cellI / 2;
+                int bigGridJ = cellJ / 2;
+
+                if (cellI % 2 == 0 && cellJ % 2 == 0)
+                {
+                    bool foundWall = false;
+                    foreach (GraphNode node in MSTs[i][Get1Dindex(bigGridI, bigGridJ)])
                     {
-                        cellI--;
-                        foundWall = true;
-                        break;
+                        if (node.i < bigGridI)
+                        {
+                            cellI--;
+                            foundWall = true;
+                            break;
+                        }
                     }
-                }
-                if(!foundWall)
-                {
-                    cellJ++;
-                }
-            } 
-            else if(cellI % 2 == 0 && cellJ % 2 == 1)
-            {
-                bool foundWall = false;
-                foreach (GraphNode node in mst[Get1Dindex(bigGridI, bigGridJ)])
-                {
-                    if (node.j > bigGridJ)
+                    if (!foundWall)
                     {
                         cellJ++;
-                        foundWall = true;
-                        break;
                     }
                 }
-                if (!foundWall)
+                else if (cellI % 2 == 0 && cellJ % 2 == 1)
                 {
-                    cellI++;
-                }
-            }
-            else if (cellI % 2 == 1 && cellJ % 2 == 1)
-            {
-                bool foundWall = false;
-                foreach (GraphNode node in mst[Get1Dindex(bigGridI, bigGridJ)])
-                {
-                    if (node.i > bigGridI)
+                    bool foundWall = false;
+                    foreach (GraphNode node in MSTs[i][Get1Dindex(bigGridI, bigGridJ)])
+                    {
+                        if (node.j > bigGridJ)
+                        {
+                            cellJ++;
+                            foundWall = true;
+                            break;
+                        }
+                    }
+                    if (!foundWall)
                     {
                         cellI++;
-                        foundWall = true;
-                        break;
                     }
                 }
-                if (!foundWall)
+                else if (cellI % 2 == 1 && cellJ % 2 == 1)
                 {
-                    cellJ--;
-                }
-            }
-            else if (cellI % 2 == 1 && cellJ % 2 == 0)
-            {
-                bool foundWall = false;
-                foreach (GraphNode node in mst[Get1Dindex(bigGridI, bigGridJ)])
-                {
-                    if (node.j < bigGridJ)
+                    bool foundWall = false;
+                    foreach (GraphNode node in MSTs[i][Get1Dindex(bigGridI, bigGridJ)])
+                    {
+                        if (node.i > bigGridI)
+                        {
+                            cellI++;
+                            foundWall = true;
+                            break;
+                        }
+                    }
+                    if (!foundWall)
                     {
                         cellJ--;
-                        foundWall = true;
-                        break;
                     }
                 }
-                if (!foundWall)
+                else if (cellI % 2 == 1 && cellJ % 2 == 0)
                 {
-                    cellI--;
+                    bool foundWall = false;
+                    foreach (GraphNode node in MSTs[i][Get1Dindex(bigGridI, bigGridJ)])
+                    {
+                        if (node.j < bigGridJ)
+                        {
+                            cellJ--;
+                            foundWall = true;
+                            break;
+                        }
+                    }
+                    if (!foundWall)
+                    {
+                        cellI--;
+                    }
                 }
             }
         }
     }
-
     private void OnDrawGizmos()
     {
         if(!Application.isPlaying)
@@ -533,58 +543,26 @@ public class CreateMST : MonoBehaviour
             return;
         }
 
-        /*Gizmos.color = Color.blue;
-        for(int i = 0; i < graph.Count; ++i)
-        {
-
-            float x = terrain_manager.myInfo.get_x_pos(cells[i].i);
-            float z = terrain_manager.myInfo.get_z_pos(cells[i].j);
-
-            for(int j = 0; j < graph[i].Count; ++j)
-            {
-                float nX = terrain_manager.myInfo.get_x_pos(graph[i][j].i);
-                float nZ = terrain_manager.myInfo.get_z_pos(graph[i][j].j);
-                Gizmos.DrawLine(new Vector3(x, 1, z), new Vector3(nX, 1, nZ));
-            }
-        }*/
-        Gizmos.color = Color.white;
-        for (int i = 0; i < mst.Count; ++i)
-        {
-
-            float x = terrain_manager.myInfo.get_x_pos(cells[i].i);
-            float z = terrain_manager.myInfo.get_z_pos(cells[i].j);
-
-            for (int j = 0; j < mst[i].Count; ++j)
-            {
-                float nX = terrain_manager.myInfo.get_x_pos(mst[i][j].i);
-                float nZ = terrain_manager.myInfo.get_z_pos(mst[i][j].j);
-                Gizmos.DrawLine(new Vector3(x, 1, z), new Vector3(nX, 1, nZ));
-            }
-        }
-
         Color[] robot_colors = new Color[]
         {
             Color.red, Color.blue, Color.black
         };
-
-        // Printing robots'paths (hardcoded for 3 robots)
-        float cube_side = 8f;
-        Vector3 cube_size = new Vector3(cube_side, cube_side, cube_side);
-        for (int cell = 0; cell < pathOf.Length; cell++)
+        for(int k = 0; k < MSTs.Length; ++k)
         {
-            if(pathOf[cell] == -1)
+            Gizmos.color = robot_colors[k];
+            for (int i = 0; i < MSTs[k].Count; ++i)
             {
-                continue;
+
+                float x = terrain_manager.myInfo.get_x_pos(cells[i].i);
+                float z = terrain_manager.myInfo.get_z_pos(cells[i].j);
+
+                for (int j = 0; j < MSTs[k][i].Count; ++j)
+                {
+                    float nX = terrain_manager.myInfo.get_x_pos(MSTs[k][i][j].i);
+                    float nZ = terrain_manager.myInfo.get_z_pos(MSTs[k][i][j].j);
+                    Gizmos.DrawLine(new Vector3(x, 1, z), new Vector3(nX, 1, nZ));
+                }
             }
-
-            float x = terrain_manager.myInfo.get_x_pos(cells[cell].i);
-            float z = terrain_manager.myInfo.get_z_pos(cells[cell].j);
-
-            Gizmos.color = robot_colors[pathOf[cell]];
-
-            Gizmos.DrawCube(new Vector3(x, 2f, z), cube_size);
-
         }
-
     }
 }

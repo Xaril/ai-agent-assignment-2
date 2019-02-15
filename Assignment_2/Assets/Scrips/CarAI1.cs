@@ -83,7 +83,17 @@ namespace UnityStandardAssets.Vehicles.Car
                 Debug.Log(pos.ToString());
             }
 
-            mstPath = mstCreator.GetComponent<CreateMST>().path;
+            int carNumber = 0;
+            for(int i = 0; i < friends.Length; ++i)
+            {
+                if(friends[i].name == this.name)
+                {
+                    carNumber = i;
+                    break;
+                }
+            }
+
+            mstPath = mstCreator.GetComponent<CreateMST>().paths[carNumber];
             Point startPoint = new Point((int)transform.position.x, (int)transform.position.z);
             Point endPoint = new Point((int)mstPath[0].x, (int)mstPath[0].z);
 
