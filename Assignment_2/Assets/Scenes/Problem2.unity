@@ -10672,7 +10672,7 @@ MonoBehaviour:
     time_array: []
     file_name: 
     json_string: 
-  RecordingOn: 1
+  RecordingOn: 0
   PlaybackOn: 0
   position_list: []
   rotation_list: []
@@ -34095,7 +34095,7 @@ MonoBehaviour:
     time_array: []
     file_name: 
     json_string: 
-  RecordingOn: 1
+  RecordingOn: 0
   PlaybackOn: 0
   position_list: []
   rotation_list: []
@@ -76848,7 +76848,7 @@ MonoBehaviour:
     time_array: []
     file_name: 
     json_string: 
-  RecordingOn: 1
+  RecordingOn: 0
   PlaybackOn: 0
   position_list: []
   rotation_list: []
