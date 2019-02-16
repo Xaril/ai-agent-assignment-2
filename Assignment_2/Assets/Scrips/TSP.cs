@@ -24,13 +24,13 @@ public static class TSP
                     bestIndex = j;
                 }
             }
-            path[i] = best;
+            path.Add(best);
             used[bestIndex] = true;
         }
         return path;
     }
 
-    public static List<Vector3>[] GenerateCarPaths(List<Vector3> path, Vector3[] carPositions)
+    public static List<Vector3>[] GenerateCarPaths(List<Vector3> path)
     {
         System.Random random = new System.Random();
         int first = random.Next() % path.Count;

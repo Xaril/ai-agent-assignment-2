@@ -36,6 +36,17 @@ public class CreateMSC : MonoBehaviour
         createMSC();
     }
 
+    public List<Vector3>[] GetPaths()
+    {
+        List<Vector3> positions = new List<Vector3>();
+        foreach(CoverNode node in coverNodes)
+        {
+            positions.Add(node.position);
+        }
+        List<Vector3>[] paths = TSP.GenerateCarPaths(TSP.GreedyPath(positions));
+        return paths;
+    }
+
     private void createMSC()
     {
         // Marke all nodes that are covered at the start

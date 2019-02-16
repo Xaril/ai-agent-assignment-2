@@ -18,10 +18,12 @@ namespace UnityStandardAssets.Vehicles.Car
         public GameObject[] enemies;
 
         public Dictionary<String, Vector3> initial_positions;
-        public List<Vector3> mstPath;
+        public List<Vector3> mscPath;
         private int currentPathIndex = 0;
         private float distanceOffset = 5f;
         private List<Vector3> finalPath;
+
+        public GameObject MSC;
 
         public float maxVelocity;
         public float acceleration;
@@ -40,6 +42,8 @@ namespace UnityStandardAssets.Vehicles.Car
         private float crashDirection;
         private Vector3 previousPosition;
         private ConfigurationSpace configurationSpace;
+
+        int coverIndex;
 
         private void Start()
         {
@@ -93,14 +97,17 @@ namespace UnityStandardAssets.Vehicles.Car
             }
 
 
-            //TODO: Use VRP path instead
+            List<Vector3> path = MSC.GetComponent<CreateMSC>().GetPaths()[carNumber];
+            coverIndex = 0;
+
             Point startPoint = new Point((int)transform.position.x, (int)transform.position.z);
-            Point endPoint = new Point((int)mstPath[0].x, (int)mstPath[0].z);
+            Point endPoint = new Point((int)path[coverIndex].x, (int)path[coverIndex].z);
 
 
             PathGenerator aStar = new PathGenerator(terrain_manager);
             List<Vector3> startPath = aStar.GetPath(startPoint, endPoint, transform.rotation.eulerAngles.y);
             finalPath = startPath;
+            mscPath = path;
 
         }
 
@@ -148,7 +155,14 @@ namespace UnityStandardAssets.Vehicles.Car
                 currentPathIndex++;
                 if (currentPathIndex + 3 >= finalPath.Count)
                 {
-                    finalPath = mstPath; //TODO: Use VRP path instead
+                    coverIndex++;
+                    Point startPoint = new Point((int)transform.position.x, (int)transform.position.z);
+                    Point endPoint = new Point((int)mscPath[coverIndex].x, (int)mscPath[coverIndex].z);
+
+
+                    PathGenerator aStar = new PathGenerator(terrain_manager);
+                    List<Vector3> startPath = aStar.GetPath(startPoint, endPoint, transform.rotation.eulerAngles.y);
+                    finalPath = startPath; //TODO: Use VRP path instead
                     currentPathIndex = 0;
                 }
             }
