@@ -1,9 +1,11 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System;
 using UnityEngine;
 
 public static class TSP
 {
+    //TODO: Change distance heuristic to think about obstacles
     public static List<Vector3> GreedyPath(List<Vector3> points)
     {
         List<Vector3> path = new List<Vector3>() { points[0] };
@@ -26,5 +28,39 @@ public static class TSP
             used[bestIndex] = true;
         }
         return path;
+    }
+
+    public static List<Vector3>[] GenerateCarPaths(List<Vector3> path, Vector3[] carPositions)
+    {
+        System.Random random = new System.Random();
+        int first = random.Next() % path.Count;
+        int second;
+        do
+        {
+            second = random.Next() % path.Count;
+        } while (first == second);
+        int third;
+        do
+        {
+            third = random.Next() % path.Count;
+        } while (third == first || third == second);
+
+        int[] startPoints = { first, second, third };
+        Array.Sort(startPoints);
+
+        List<Vector3>[] paths = new List<Vector3>[startPoints.Length];
+        for(int i = 0; i < startPoints.Length; ++i)
+        {
+            paths[i] = new List<Vector3>();
+            int j = startPoints[i];
+            while (j % path.Count != startPoints[(i+1)%startPoints.Length])
+            {
+                paths[i].Add(path[j]);
+                ++j;
+                j = j % path.Count;
+            }
+        }
+
+        return paths;
     }
 }
