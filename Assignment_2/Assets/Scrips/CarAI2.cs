@@ -43,8 +43,6 @@ namespace UnityStandardAssets.Vehicles.Car
         private Vector3 previousPosition;
         private ConfigurationSpace configurationSpace;
 
-        int coverIndex;
-
         private void Start()
         {
             Time.timeScale = 1;
@@ -98,16 +96,34 @@ namespace UnityStandardAssets.Vehicles.Car
 
 
             List<Vector3> path = MSC.GetComponent<CreateMSC>().GetPaths()[carNumber];
-            coverIndex = 0;
 
             Point startPoint = new Point((int)transform.position.x, (int)transform.position.z);
-            Point endPoint = new Point((int)path[coverIndex].x, (int)path[coverIndex].z);
+            Point endPoint = new Point((int)path[0].x, (int)path[0].z);
 
 
             PathGenerator aStar = new PathGenerator(terrain_manager);
             List<Vector3> startPath = aStar.GetPath(startPoint, endPoint, transform.rotation.eulerAngles.y);
             finalPath = startPath;
-            mscPath = path;
+            mscPath = new List<Vector3>();
+            for(int i = 0; i < path.Count; ++i)
+            {
+                Point a = new Point((int)path[i].x, (int)path[i].z);
+                Point b = new Point((int)path[(i + 1)%path.Count].x, (int)path[(i + 1) % path.Count].z);
+
+                List<Vector3> p;
+                if(i == 0)
+                {
+                    float dir = Quaternion.LookRotation(new Vector3(a.x, 0, a.y) + startPath[startPath.Count - 1]).eulerAngles.y;
+                    p = aStar.GetPath(a, b, dir);
+                }
+                else
+                {
+                    float dir = Quaternion.LookRotation(new Vector3(a.x, 0, a.y) + mscPath[mscPath.Count - 1]).eulerAngles.y;
+                    p = aStar.GetPath(a, b, dir);
+                }
+
+                mscPath.AddRange(p);
+            }
 
         }
 
@@ -155,14 +171,7 @@ namespace UnityStandardAssets.Vehicles.Car
                 currentPathIndex++;
                 if (currentPathIndex + 3 >= finalPath.Count)
                 {
-                    coverIndex++;
-                    Point startPoint = new Point((int)transform.position.x, (int)transform.position.z);
-                    Point endPoint = new Point((int)mscPath[coverIndex].x, (int)mscPath[coverIndex].z);
-
-
-                    PathGenerator aStar = new PathGenerator(terrain_manager);
-                    List<Vector3> startPath = aStar.GetPath(startPoint, endPoint, transform.rotation.eulerAngles.y);
-                    finalPath = startPath; //TODO: Use VRP path instead
+                    finalPath = mscPath;
                     currentPathIndex = 0;
                 }
             }

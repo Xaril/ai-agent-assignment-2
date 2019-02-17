@@ -53,7 +53,10 @@ public static class TSP
         {
             paths[i] = new List<Vector3>();
             int j = startPoints[i];
-            while (j % path.Count != startPoints[(i+1)%startPoints.Length])
+            paths[i].Add(path[j]);
+            ++j;
+            j = j % path.Count;
+            while (j % path.Count != startPoints[i])
             {
                 paths[i].Add(path[j]);
                 ++j;
