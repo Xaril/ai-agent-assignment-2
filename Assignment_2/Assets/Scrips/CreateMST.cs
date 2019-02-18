@@ -228,13 +228,13 @@ public class CreateMST : MonoBehaviour
                     // Tree cannot be expanded anymore
                     continue;
                 }
-                Debug.Log(string.Format("Robot: {0}", robot));
+                //Debug.Log(string.Format("Robot: {0}", robot));
                 // For each remaining cell, pick the one farthest from other robots'paths
                 float best_min_dist = float.NegativeInfinity; // The bigger, the better
                 GraphNode best_node = null;
                 foreach (var remaining_node in remaining_for_robot[robot])
                 {
-                    Debug.Log(string.Format("{0}", remaining_node.ToString()));
+                    //Debug.Log(string.Format("{0}", remaining_node.ToString()));
                     // At the moment we use ManhattanDistance (doesn't take obstacles into accout)
                     // We could try BFS
                     float min_dist = ComputeMinManhattanDistance(remaining_node, robot);
@@ -247,9 +247,9 @@ public class CreateMST : MonoBehaviour
                 // Remove this best candidate from all the remaining lists and block it
                 for (int i = 0; i < n_robots; i++)
                 {
-                    Debug.Log(string.Format("Len before remove: {0}", remaining_for_robot[i].Count));
+                    //Debug.Log(string.Format("Len before remove: {0}", remaining_for_robot[i].Count));
                     remaining_for_robot[i].Remove(best_node);
-                    Debug.Log(string.Format("Len after remove: {0}", remaining_for_robot[i].Count));
+                    //Debug.Log(string.Format("Len after remove: {0}", remaining_for_robot[i].Count));
                     addedToRemaining[i][best_node.ij] = true;
                 }
                 addNeighbours(best_node, addedToRemaining, remaining_for_robot, robot);
@@ -296,8 +296,8 @@ public class CreateMST : MonoBehaviour
                 {
                     if(pathOf[ij_check] != -1 && pathOf[ij_check] != robot)
                     {
-                        Debug.Log(string.Format("Robot: {0}\ti: {1}\tj: {2}",
-                            robot, i_check, j_check));
+                        //Debug.Log(string.Format("Robot: {0}\ti: {1}\tj: {2}",
+                        //    robot, i_check, j_check));
                         return manhattan_radius;
                     }
                 }
@@ -308,8 +308,8 @@ public class CreateMST : MonoBehaviour
                 {
                     if (pathOf[ij_check] != -1 && pathOf[ij_check] != robot)
                     {
-                        Debug.Log(string.Format("Robot: {0}\ti: {1}\tj: {2}",
-                             robot, i_check, j_check));
+                        //Debug.Log(string.Format("Robot: {0}\ti: {1}\tj: {2}",
+                        //     robot, i_check, j_check));
                         return manhattan_radius;
                     }
                 }
@@ -320,8 +320,8 @@ public class CreateMST : MonoBehaviour
                 {
                     if (pathOf[ij_check] != -1 && pathOf[ij_check] != robot)
                     {
-                        Debug.Log(string.Format("Robot: {0}\ti: {1}\tj: {2}",
-                             robot, i_check, j_check));
+                        //Debug.Log(string.Format("Robot: {0}\ti: {1}\tj: {2}",
+                        //     robot, i_check, j_check));
                         return manhattan_radius;
                     }
                 }
@@ -332,8 +332,8 @@ public class CreateMST : MonoBehaviour
                 {
                     if (pathOf[ij_check] != -1 && pathOf[ij_check] != robot)
                     {
-                        Debug.Log(string.Format("Robot: {0}\ti: {1}\tj: {2}",
-                             robot, i_check, j_check));
+                        //Debug.Log(string.Format("Robot: {0}\ti: {1}\tj: {2}",
+                        //     robot, i_check, j_check));
                         return manhattan_radius;
                     }
                 }
@@ -547,6 +547,7 @@ public class CreateMST : MonoBehaviour
         {
             Color.red, Color.blue, Color.black
         };
+        
         for(int k = 0; k < MSTs.Length; ++k)
         {
             Gizmos.color = robot_colors[k];
