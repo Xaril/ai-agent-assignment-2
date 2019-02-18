@@ -113,12 +113,12 @@ namespace UnityStandardAssets.Vehicles.Car
                 List<Vector3> p;
                 if(i == 0)
                 {
-                    float dir = Quaternion.LookRotation(new Vector3(a.x, 0, a.y) + startPath[startPath.Count - 1]).eulerAngles.y;
+                    float dir = Quaternion.LookRotation(new Vector3(a.x, 0, a.y) - startPath[startPath.Count - 2]).eulerAngles.y;
                     p = aStar.GetPath(a, b, dir);
                 }
                 else
                 {
-                    float dir = Quaternion.LookRotation(new Vector3(a.x, 0, a.y) + mscPath[mscPath.Count - 1]).eulerAngles.y;
+                    float dir = Quaternion.LookRotation(new Vector3(a.x, 0, a.y) - mscPath[mscPath.Count - 2]).eulerAngles.y;
                     p = aStar.GetPath(a, b, dir);
                 }
 
