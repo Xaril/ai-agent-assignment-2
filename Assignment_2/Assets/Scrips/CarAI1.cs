@@ -19,6 +19,7 @@ namespace UnityStandardAssets.Vehicles.Car
         public GameObject[] enemies;
 
         public Dictionary<String, Vector3> initial_positions;
+        public Dictionary<String, Color> car_colors;
         private List<Vector3> mstPath;
         private int currentPathIndex = 0;
         private float distanceOffset = 5f;
@@ -67,7 +68,6 @@ namespace UnityStandardAssets.Vehicles.Car
 
             InitializeCSpace();
 
-
             // note that both arrays will have holes when objects are destroyed
             // but for initial planning they should work
             friends = GameObject.FindGameObjectsWithTag("Player");
@@ -77,6 +77,7 @@ namespace UnityStandardAssets.Vehicles.Car
 
 
             initial_positions = GetInitPos(friends);
+            InitCarColors();
 
             foreach (var pos in initial_positions)
             {
@@ -103,6 +104,32 @@ namespace UnityStandardAssets.Vehicles.Car
             List<Vector3> startPath = aStar.GetPath(startPoint, endPoint, transform.rotation.eulerAngles.y);
             finalPath = startPath;
 
+        }
+
+        private void InitCarColors()
+        {
+            this.car_colors = new Dictionary<String, Color>();
+
+            for (int i = 0; i < friends.Length; i++)
+            {
+                switch (friends[i].name)
+                {
+                    case "ArmedCar":
+                        this.car_colors.Add(friends[i].name,
+                            Color.blue);
+                        break;
+                    case "ArmedCar (1)":
+                        this.car_colors.Add(friends[i].name,
+                            Color.red);
+                        break;
+                    case "ArmedCar (2)":
+                        this.car_colors.Add(friends[i].name,
+                            Color.black);
+                        break;
+                    default:
+                        break;
+                }
+            }
         }
 
         private Dictionary<String, Vector3> GetInitPos(GameObject[] friends)
@@ -303,6 +330,10 @@ namespace UnityStandardAssets.Vehicles.Car
                 }
                 Gizmos.DrawCube(finalPath[i], Vector3.one);
             }
+
+            Gizmos.color = car_colors[m_Car.name];
+
+            Gizmos.DrawSphere(transform.position, 10f);
         }
     }
 }
