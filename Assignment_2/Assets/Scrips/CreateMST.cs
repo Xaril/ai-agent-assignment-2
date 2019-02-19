@@ -55,7 +55,149 @@ public class CreateMST : MonoBehaviour
         }
 
         MSTs = MSTC();
+        PostProcessTrees();
         FindPaths();
+    }
+
+    private void PostProcessTrees()
+    {
+        int n_iterations = 3;
+        int robot;
+
+        for (int iter = 0; iter < n_iterations; iter++)
+        {
+            GraphNode[] best_nodes = new GraphNode[cells.Count];
+            for (int cell = 0; cell < cells.Count; cell++)
+            {
+                if (cells[cell].obstacle)
+                {
+                    continue;
+                }
+
+                if (IsLeaf(cell))
+                {
+                    robot = pathOf[cell];
+
+                    best_nodes[cell] = TryNewConnection(cell, robot);
+
+                    //Debug.Log(string.Format("Cell {0} is leaf. ({1}, {2})",
+                    //    cell, cells[cell].i, cells[cell].j));
+                }
+            }
+
+            for (int cell = 0; cell < cells.Count; cell++)
+            {
+                robot = pathOf[cell];
+                if (best_nodes[cell] == null)
+                {
+                    continue;
+                }
+
+                if (BreaksTree(cell, best_nodes[cell]))
+                {
+                    continue;
+                }
+
+                // Remove previous connection
+                GraphNode previous_node = MSTs[robot][cell][0];
+                MSTs[robot][cell].Remove(previous_node);
+                MSTs[robot][previous_node.ij].Remove(cells[cell]);
+                // Connect to the new best found node
+                MSTs[robot][cell].Add(best_nodes[cell]);
+                MSTs[robot][best_nodes[cell].ij].Add(cells[cell]);
+            }
+
+        }
+    }
+
+    private bool BreaksTree(int cell, GraphNode graphNode)
+    {
+        int robot = pathOf[cell];
+        GraphNode prev = cells[cell];
+        GraphNode current = graphNode;
+        int i = 0;
+
+        GraphNode previous_node = MSTs[robot][cell][0];
+        
+        MSTs[robot][cell].Remove(previous_node);
+        MSTs[robot][previous_node.ij].Remove(cells[cell]);
+        // Connect to the new best found node
+        MSTs[robot][cell].Add(graphNode);
+        MSTs[robot][graphNode.ij].Add(cells[cell]);
+
+        while (MSTs[robot][current.ij].Count == 2)
+        {
+            i++;
+            // Select next, different from current
+            if (MSTs[robot][current.ij][0].Equals(prev))
+            {
+                prev = current;
+                current = MSTs[robot][current.ij][1];
+            }
+            else
+            {
+                prev = current;
+                current = MSTs[robot][current.ij][0];
+            }
+            if (i > 100)
+            {
+                // Reverse
+                MSTs[robot][cell].Add(previous_node);
+                MSTs[robot][previous_node.ij].Add(cells[cell]);
+                MSTs[robot][cell].Remove(graphNode);
+                MSTs[robot][graphNode.ij].Remove(cells[cell]);
+                Debug.Assert(MSTs[robot][cell].Count > 0, string.Format("Cell {0} is not connected", cell));
+                return true;
+            }
+        }
+        MSTs[robot][cell].Add(previous_node);
+        MSTs[robot][previous_node.ij].Add(cells[cell]);
+        MSTs[robot][cell].Remove(graphNode);
+        MSTs[robot][graphNode.ij].Remove(cells[cell]);
+        Debug.Assert(MSTs[robot][cell].Count > 0, string.Format("Cell {0} is not connected", cell));
+        return false;
+    }
+
+    private GraphNode TryNewConnection(int cell, int robot)
+    {
+        // TODO: connect with node that has longest single path
+        int n_connections;
+        GraphNode current_connected_node = MSTs[robot][cell][0];
+        GraphNode best_neighbor = null;
+        GraphNode node = cells[cell];
+        int lowest_n_connections = MSTs[robot][current_connected_node.ij].Count-1;
+        // Check neighbors belonging to same path
+        foreach (var neighbor in graph[cell])
+        {
+            if (pathOf[neighbor.ij] != robot)
+            {
+                continue;
+            }
+            n_connections = MSTs[robot][neighbor.ij].Count;
+            if (n_connections < lowest_n_connections)
+            {
+                lowest_n_connections = n_connections;
+                best_neighbor = neighbor;
+            }
+        }
+
+        //if (best_neighbor == null)
+        //{
+        //    return;
+        //}
+
+        //// Remove previous connection
+        //MSTs[robot][cell].Remove(current_connected_node);
+        //MSTs[robot][current_connected_node.ij].Remove(node);
+        //// Connect to the new best found node
+        //MSTs[robot][cell].Add(best_neighbor);
+        //MSTs[robot][best_neighbor.ij].Add(node);
+        return best_neighbor;
+    }
+
+    private bool IsLeaf(int cell)
+    {
+        return MSTs[pathOf[cell]][cell].Count == 1;
     }
 
     void FixedUpdate()
@@ -219,7 +361,7 @@ public class CreateMST : MonoBehaviour
         // End initialization
 
         // Computes the a tree for each robot
-        for (int iteration = 0; iteration < 200; iteration++)
+        while (!AllAreEmpty(remaining_for_robot))
         {
             for (int robot = 0; robot < n_robots; robot++)
             {
@@ -235,7 +377,7 @@ public class CreateMST : MonoBehaviour
                 foreach (var remaining_node in remaining_for_robot[robot])
                 {
                     //Debug.Log(string.Format("{0}", remaining_node.ToString()));
-                    // At the moment we use ManhattanDistance (doesn't take obstacles into accout)
+                    // At the moment we use ManhattanDistance (doesn't take obstacles into account)
                     // We could try BFS
                     float min_dist = ComputeMinManhattanDistance(remaining_node, robot);
                     if (min_dist > best_min_dist)
@@ -262,6 +404,18 @@ public class CreateMST : MonoBehaviour
         }
 
         return all_trees;
+    }
+
+    private bool AllAreEmpty(List<List<GraphNode>> remaining_for_robot)
+    {
+        foreach (var list_nodes in remaining_for_robot)
+        {
+            if (list_nodes.Count > 0)
+            {
+                return false;
+            }
+        }
+        return true;
     }
 
     private GraphNode FindParent(GraphNode node, int robot)
