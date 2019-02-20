@@ -17,11 +17,52 @@ namespace UnityStandardAssets.Vehicles.Car
         public GameObject[] friends;
         public GameObject[] enemies;
 
+        public float maxVelocity;
+        public float acceleration;
+        private float timeStep;
+        private int numberOfSteps;
+        private float time;
+
+        private float steerDirection;
+        private float accelerationDirection;
+        private float brake;
+        private float handBrake;
+
+        private bool crashed;
+        private float crashTime;
+        private float crashCheckTime;
+        private float crashDirection;
+        private Vector3 previousPosition;
+        private ConfigurationSpace configurationSpace;
+
+        Vector3 followPoint;
+        Vector3 previousPoint;
+        int carNumber;
+
         private void Start()
         {
-            // get the car controller
-            m_Car = GetComponent<CarController>();
+            Time.timeScale = 1;
+            maxVelocity = 20;
+            acceleration = 1f;
+
+            timeStep = 0.05f;
+            numberOfSteps = 5;
+            time = 0;
+
+            steerDirection = 0;
+            accelerationDirection = 0;
+            brake = 0;
+            handBrake = 0;
+            crashed = false;
+            crashTime = 0;
+            crashCheckTime = 1f;
+            crashDirection = 0;
+            previousPosition = Vector3.up;
+
             terrain_manager = terrain_manager_game_object.GetComponent<TerrainManager>();
+            m_Car = GetComponent<CarController>();
+
+            InitializeCSpace();
 
 
             // note that both arrays will have holes when objects are destroyed
@@ -29,71 +70,102 @@ namespace UnityStandardAssets.Vehicles.Car
             friends = GameObject.FindGameObjectsWithTag("Player");
             enemies = GameObject.FindGameObjectsWithTag("Enemy");
 
-
-
-            // Plan your path here
-            // ...
+            carNumber = 0;
+            for (int i = 0; i < friends.Length; ++i)
+            {
+                if (friends[i].name == this.name)
+                {
+                    carNumber = i;
+                    break;
+                }
+            }
         }
-
 
         private void FixedUpdate()
         {
+            previousPoint = followPoint;
+            followPoint = FindFollowPoint();
+            float pointVelocity = Vector3.Distance(previousPoint, followPoint) / Time.deltaTime;
 
+            steerDirection = SteerInput(m_Car.transform.position, m_Car.transform.eulerAngles.y, followPoint);
+            accelerationDirection = AccelerationInput(m_Car.transform.position, m_Car.transform.eulerAngles.y, followPoint);
 
-            // Execute your path here
-            // ...
-
-            Vector3 avg_pos = Vector3.zero;
-
-            foreach (GameObject friend in friends)
+            if ((m_Car.CurrentSpeed >= pointVelocity && Vector3.Distance(followPoint, m_Car.transform.position) < 1) || 
+                m_Car.CurrentSpeed >= maxVelocity)
             {
-                avg_pos += friend.transform.position;
-            }
-            avg_pos = avg_pos / friends.Length;
-            Vector3 direction = (avg_pos - transform.position).normalized;
-
-            bool is_to_the_right = Vector3.Dot(direction, transform.right) > 0f;
-            bool is_to_the_front = Vector3.Dot(direction, transform.forward) > 0f;
-
-            float steering = 0f;
-            float acceleration = 0;
-
-            if (is_to_the_right && is_to_the_front)
-            {
-                steering = 1f;
-                acceleration = 1f;
-            }
-            else if (is_to_the_right && !is_to_the_front)
-            {
-                steering = -1f;
-                acceleration = -1f;
-            }
-            else if (!is_to_the_right && is_to_the_front)
-            {
-                steering = -1f;
-                acceleration = 1f;
-            }
-            else if (!is_to_the_right && !is_to_the_front)
-            {
-                steering = 1f;
-                acceleration = -1f;
+                accelerationDirection = 0;
             }
 
-            // this is how you access information about the terrain
-            int i = terrain_manager.myInfo.get_i_index(transform.position.x);
-            int j = terrain_manager.myInfo.get_j_index(transform.position.z);
-            float grid_center_x = terrain_manager.myInfo.get_x_pos(i);
-            float grid_center_z = terrain_manager.myInfo.get_z_pos(j);
+            if (accelerationDirection < 0)
+            {
+                m_Car.Move(steerDirection, brake, accelerationDirection * acceleration, handBrake);
+            }
+            else
+            {
+                m_Car.Move(steerDirection, accelerationDirection * acceleration, -brake, handBrake);
+            }
+        }
 
-            Debug.DrawLine(transform.position, new Vector3(grid_center_x, 0f, grid_center_z));
+        private Vector3 FindFollowPoint()
+        {
+            Vector3 averagePosition = Vector3.zero;
+            float averageAngle = 0;
+            foreach(GameObject friend in friends)
+            {
+                averagePosition += friend.transform.position;
+                averageAngle += friend.transform.eulerAngles.y;
+            }
+            averagePosition /= friends.Length;
+            averageAngle /= friends.Length;
+            averageAngle *= Mathf.Deg2Rad;
 
+            Vector3 offset;
+            switch(carNumber)
+            {
+                case 0:
+                    offset = new Vector3(0, 0, -25);//new Vector3(-10 * Mathf.Cos(averageAngle), 0, 10 * Mathf.Sin(averageAngle));
+                    break;
+                case 1:
+                    offset = new Vector3(0, 0, -12.5f);
+                    break;
+                case 2:
+                    offset = new Vector3(0, 0, 12.5f);
+                    break;
+                default:
+                    offset = new Vector3(0, 0, 25);//new Vector3(10 * Mathf.Cos(averageAngle), 0, 10 * Mathf.Sin(averageAngle));
+                    break;
+            }
 
-            // this is how you control the car
-            Debug.Log("Steering:" + steering + " Acceleration:" + acceleration);
-            m_Car.Move(steering, acceleration, acceleration, 0f);
-            //m_Car.Move(0f, -1f, 1f, 0f);
+            return GameObject.FindWithTag("Point").transform.position + offset;
+        }
 
+        //Determines steer angle for the car
+        private float SteerInput(Vector3 position, float theta, Vector3 point)
+        {
+            Vector3 direction = Quaternion.Euler(0, theta, 0) * Vector3.forward;
+            Vector3 directionToPoint = point - position;
+            float angle = Vector3.Angle(direction, directionToPoint) * Mathf.Sign(-direction.x * directionToPoint.z + direction.z * directionToPoint.x);
+            float steerAngle = Mathf.Clamp(angle, -m_Car.m_MaximumSteerAngle, m_Car.m_MaximumSteerAngle) / m_Car.m_MaximumSteerAngle;
+            return steerAngle;
+        }
 
+        //Determines acceleration for the car
+        private float AccelerationInput(Vector3 position, float theta, Vector3 point)
+        {
+            Vector3 direction = Quaternion.Euler(0, theta, 0) * Vector3.forward;
+            Vector3 directionToPoint = point - position;
+            return Mathf.Clamp(direction.x * directionToPoint.x + direction.z * directionToPoint.z, -1, 1);
+        }
+
+        //Get size of car collider to be used with C space
+        private void InitializeCSpace()
+        {
+            Quaternion carRotation = m_Car.transform.rotation;
+            m_Car.transform.rotation = Quaternion.identity;
+            configurationSpace = new ConfigurationSpace();
+            BoxCollider carCollider = GameObject.Find("ColliderBottom").GetComponent<BoxCollider>();
+            configurationSpace.BoxSize = carCollider.transform.TransformVector(carCollider.size);
+            m_Car.transform.rotation = carRotation;
         }
     }
 }
