@@ -46,7 +46,7 @@ namespace UnityStandardAssets.Vehicles.Car
         private void Start()
         {
             Time.timeScale = 1;
-            maxVelocity = 150;
+            maxVelocity = 20;
             acceleration = 1f;
 
             timeStep = 0.05f;
@@ -174,7 +174,7 @@ namespace UnityStandardAssets.Vehicles.Car
             if (Vector3.Distance(finalPath[currentPathIndex], transform.position) <= distanceOffset)
             {
                 currentPathIndex++;
-                if(currentPathIndex + 3 >= finalPath.Count)
+                if(currentPathIndex + 1 >= finalPath.Count)
                 {
                     finalPath = mstPath;
                     currentPathIndex = 0;
@@ -212,41 +212,12 @@ namespace UnityStandardAssets.Vehicles.Car
                     }
                 }
                 steerDirection = SteerInput(m_Car.transform.position, m_Car.transform.eulerAngles.y, finalPath[currentPathIndex]);
-                if (Mathf.Abs(steerDirection) < 0.2f)
+                accelerationDirection = AccelerationInput(m_Car.transform.position, m_Car.transform.eulerAngles.y, finalPath[currentPathIndex]);
+
+                float aboutToSteer = SteerInput(m_Car.transform.position, m_Car.transform.eulerAngles.y, finalPath[(currentPathIndex + 1) % finalPath.Count]);
+                if (Mathf.Abs(aboutToSteer) > 0.3f && Mathf.Abs(steerDirection) < 0.3f)
                 {
-                    steerDirection = 0;
-                }
-                brake = 0;
-                if (Mathf.Abs(steerDirection) > 0.8f && m_Car.CurrentSpeed > maxVelocity / 10)
-                {
-                    accelerationDirection = 0;
-                    if (m_Car.CurrentSpeed > maxVelocity / 5)
-                    {
-                        handBrake = 1;
-                    }
-                    else
-                    {
-                        handBrake = 0;
-                    }
-                }
-                else
-                {
-                    accelerationDirection = AccelerationInput(m_Car.transform.position, m_Car.transform.eulerAngles.y, finalPath[currentPathIndex]);
-                    handBrake = 0;
-                }
-                if (currentPathIndex < finalPath.Count - 1)
-                {
-                    int stepsToCheck = Mathf.Min(3 + (int)(m_Car.CurrentSpeed * 1.6f * 1.6f * m_Car.CurrentSpeed / 500), finalPath.Count - 1 - currentPathIndex);
-                    for (int i = 1; i <= stepsToCheck; ++i)
-                    {
-                        float steerCheck = SteerInput(m_Car.transform.position, m_Car.transform.eulerAngles.y, finalPath[currentPathIndex + i]);
-                        if (Mathf.Abs(steerCheck) > 0.8f && (m_Car.CurrentSpeed * 1.6f * 1.6f * m_Car.CurrentSpeed) >= Vector3.Distance(m_Car.transform.position, finalPath[currentPathIndex + i]) * 125 * 0.8f)
-                        {
-                            accelerationDirection = 0;
-                            brake = 1;
-                            break;
-                        }
-                    }
+                    steerDirection = -aboutToSteer;
                 }
 
                 if (m_Car.CurrentSpeed >= maxVelocity)
