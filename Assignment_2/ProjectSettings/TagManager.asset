@@ -9,6 +9,7 @@ TagManager:
   - Rescuer
   - Searcher
   - Enemy
+  - Point
   layers:
   - Default
   - TransparentFX
