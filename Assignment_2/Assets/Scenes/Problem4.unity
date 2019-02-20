@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.44657838, g: 0.49641234, b: 0.57481676, a: 1}
+  m_IndirectSpecularColor: {r: 0.44657898, g: 0.4964133, b: 0.5748178, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -10855,7 +10855,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fffafd711dc1dbc478a49705cfe1ce3d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  car: {fileID: 458510691}
 --- !u!23 &273664323
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -11513,11 +11512,11 @@ GameObject:
   - component: {fileID: 327483142}
   m_Layer: 0
   m_Name: ReplayCar (2)
-  m_TagString: Player
+  m_TagString: leader
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &327483142
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -11570,12 +11569,12 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 327483141}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: de0a9b23fa3784d75b3bdd0088f57e67, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  trajectory_filename: Text/Traj_sweep_leader
+  trajectory_filename: Text/SlowLeader2
   recordedInfo:
     position_array: []
     rotation_array: []
@@ -11583,7 +11582,7 @@ MonoBehaviour:
     file_name: 
     json_string: 
   RecordingOn: 0
-  PlaybackOn: 0
+  PlaybackOn: 1
   position_list: []
   rotation_list: []
   time_list: []
@@ -17297,7 +17296,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 02125d181a5354fe6b661b4831900cfd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  target_object: {fileID: 1471962240}
+  target_object: {fileID: 0}
   behind: 5
   above: 2
 --- !u!81 &395794776
@@ -52862,7 +52861,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1217671292
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -77148,7 +77147,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fffafd711dc1dbc478a49705cfe1ce3d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  car: {fileID: 1993684196}
 --- !u!23 &1385949840
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -77455,7 +77453,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fffafd711dc1dbc478a49705cfe1ce3d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  car: {fileID: 1471962241}
 --- !u!23 &1420260355
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -82692,7 +82689,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1471962239}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 239, y: 0.0009150505, z: 230}
+  m_LocalPosition: {x: 225, y: 0.0009150505, z: 212}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 1055986079}
@@ -89686,7 +89683,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fffafd711dc1dbc478a49705cfe1ce3d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  car: {fileID: 1902951900}
 --- !u!23 &1767440002
 MeshRenderer:
   m_ObjectHideFlags: 0

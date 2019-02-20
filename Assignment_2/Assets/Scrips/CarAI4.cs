@@ -120,23 +120,28 @@ namespace UnityStandardAssets.Vehicles.Car
             averageAngle *= Mathf.Deg2Rad;
 
             Vector3 offset;
-            switch(carNumber)
+            Transform leader = GameObject.FindWithTag("leader").transform;
+            switch (carNumber)
             {
                 case 0:
-                    offset = new Vector3(0, 0, -25);//new Vector3(-10 * Mathf.Cos(averageAngle), 0, 10 * Mathf.Sin(averageAngle));
+                    offset = Quaternion.AngleAxis(45, leader.up) * -leader.forward * 12.5f;
+                    //offset = new Vector3(0, 0, -25);//new Vector3(-10 * Mathf.Cos(averageAngle), 0, 10 * Mathf.Sin(averageAngle));
                     break;
                 case 1:
-                    offset = new Vector3(0, 0, -12.5f);
+                    offset = Quaternion.AngleAxis(45, leader.up) * -leader.forward * 25f;
+                    //offset = new Vector3(0, 0, -12.5f);
                     break;
                 case 2:
-                    offset = new Vector3(0, 0, 12.5f);
+                    offset = Quaternion.AngleAxis(-45, leader.up) * -leader.forward * 12.5f;
+                    //offset = new Vector3(0, 0, 12.5f);
                     break;
                 default:
-                    offset = new Vector3(0, 0, 25);//new Vector3(10 * Mathf.Cos(averageAngle), 0, 10 * Mathf.Sin(averageAngle));
+                    offset = Quaternion.AngleAxis(-45, leader.up) * -leader.forward * 25f;
+                    //offset = new Vector3(0, 0, 25);//new Vector3(10 * Mathf.Cos(averageAngle), 0, 10 * Mathf.Sin(averageAngle));
                     break;
             }
 
-            return GameObject.FindWithTag("Point").transform.position + offset;
+            return leader.position + offset;
         }
 
         //Determines steer angle for the car
@@ -166,6 +171,18 @@ namespace UnityStandardAssets.Vehicles.Car
             BoxCollider carCollider = GameObject.Find("ColliderBottom").GetComponent<BoxCollider>();
             configurationSpace.BoxSize = carCollider.transform.TransformVector(carCollider.size);
             m_Car.transform.rotation = carRotation;
+        }
+
+        private void OnDrawGizmos()
+        {
+            Gizmos.color = Color.blue;
+
+            Transform leader = GameObject.FindWithTag("leader").transform;
+            Gizmos.DrawSphere(leader.position + Quaternion.AngleAxis(45, leader.up) * -leader.forward * 12.5f, 1f);
+            Gizmos.DrawSphere(leader.position + Quaternion.AngleAxis(45, leader.up) * -leader.forward * 25f, 1f);
+            Gizmos.DrawSphere(leader.position + Quaternion.AngleAxis(-45, leader.up) * -leader.forward * 12.5f, 1f);
+            Gizmos.DrawSphere(leader.position + Quaternion.AngleAxis(-45, leader.up) * -leader.forward * 25f, 1f);
+
         }
     }
 }
