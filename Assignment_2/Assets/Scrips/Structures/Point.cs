@@ -21,20 +21,22 @@ class Node : IHasNeighbours<Node>
     public readonly Grid grid;
     private readonly int carDir;
     private readonly int turns;
+    private readonly bool goingBackwards;
 
     private static readonly int travelCost = 1;
-    private static readonly int maxTurns = 3;
+    private static readonly int maxTurns = 2;
 
-    private static readonly int extraCost = 250;
+    private static readonly int backCost = 100;
     private static readonly int turnCost = 5;
 
-    public Node(Point location, int cost, Grid grid, int carDir = -1, int turns = 0)
+    public Node(Point location, int cost, Grid grid, bool goingBackwards, int carDir = -1, int turns = 0)
     {
         this.location = location;
         this.cost = cost;
         this.grid = grid;
         this.carDir = carDir;
         this.turns = turns;
+        this.goingBackwards = goingBackwards;
     }
 
     public Node(Node node)
@@ -44,6 +46,7 @@ class Node : IHasNeighbours<Node>
         grid = node.grid;
         carDir = node.carDir;
         turns = node.turns;
+        goingBackwards = node.goingBackwards;
     }
 
     public Node Up
@@ -56,14 +59,15 @@ class Node : IHasNeighbours<Node>
                 return null;
        //     Point nextP = new Point(location.x, location.y+1);
             if (carDir == DOWNLEFT || carDir == DOWNRIGHT || carDir == DOWN)
-                return grid.GetNode(new Point(location.x, location.y - 1), travelCost + extraCost, UP, maxTurns);
+                return grid.GetNode(new Point(location.x, location.y - 1), travelCost + (!goingBackwards ? backCost : 0), !goingBackwards, UP, maxTurns);
             if (carDir != UP)
-                return grid.GetNode(new Point(location.x, location.y - 1), travelCost + turnCost, UP, maxTurns);
-            return grid.GetNode(new Point(location.x, location.y - 1), travelCost, UP, turns - 1);
+                return grid.GetNode(new Point(location.x, location.y - 1), travelCost + turnCost + (goingBackwards ? backCost: 0), goingBackwards, UP, maxTurns);
+            return grid.GetNode(new Point(location.x, location.y - 1), travelCost + (goingBackwards ? backCost : 0), goingBackwards, UP, turns - 1);
         }
     }
 
     public Node UpLeft
+ 
     {
         get
         {
@@ -74,11 +78,11 @@ class Node : IHasNeighbours<Node>
           //  Point nextP = new Point(location.x-1, location.y + 1);
 
             if (carDir == DOWN || carDir == RIGHT || carDir == DOWNRIGHT)
-                return grid.GetNode(new Point(location.x - 1, location.y - 1), travelCost + extraCost, UPLEFT, maxTurns);
+                return grid.GetNode(new Point(location.x - 1, location.y - 1), travelCost + (!goingBackwards ? backCost : 0), !goingBackwards, UPLEFT, maxTurns);
 
             if (carDir != UPLEFT)
-                return grid.GetNode(new Point(location.x - 1, location.y - 1), travelCost + turnCost, UPLEFT, maxTurns);
-            return grid.GetNode(new Point(location.x - 1, location.y - 1), travelCost, UPLEFT, turns - 1);
+                return grid.GetNode(new Point(location.x - 1, location.y - 1), travelCost + turnCost + (goingBackwards ? backCost : 0), goingBackwards, UPLEFT, maxTurns);
+            return grid.GetNode(new Point(location.x - 1, location.y - 1), travelCost + (goingBackwards ? backCost : 0), goingBackwards, UPLEFT, turns - 1);
         }
     }
 
@@ -93,11 +97,11 @@ class Node : IHasNeighbours<Node>
           //  Point nextP = new Point(location.x, location.y + 1);
 
             if (carDir == DOWN || carDir == LEFT || carDir == DOWNLEFT)
-                return grid.GetNode(new Point(location.x + 1, location.y - 1), travelCost + extraCost, UPRIGHT, maxTurns);
+                return grid.GetNode(new Point(location.x + 1, location.y - 1), travelCost + (!goingBackwards ? backCost : 0), !goingBackwards, UPRIGHT, maxTurns);
 
             if (carDir != UPRIGHT)
-                return grid.GetNode(new Point(location.x + 1, location.y - 1), travelCost + turnCost, UPRIGHT, maxTurns);
-            return grid.GetNode(new Point(location.x + 1, location.y - 1), travelCost, UPRIGHT, turns - 1);
+                return grid.GetNode(new Point(location.x + 1, location.y - 1), travelCost + (goingBackwards ? backCost : 0) + turnCost, goingBackwards, UPRIGHT, maxTurns);
+            return grid.GetNode(new Point(location.x + 1, location.y - 1), travelCost + (goingBackwards ? backCost : 0), goingBackwards, UPRIGHT, turns - 1);
         }
     }
 
@@ -111,11 +115,11 @@ class Node : IHasNeighbours<Node>
                 return null;
 
             if (carDir == UP || carDir == LEFT || carDir == UPLEFT)
-                return grid.GetNode(new Point(location.x + 1, location.y + 1), travelCost + extraCost, DOWNRIGHT, maxTurns);
+                return grid.GetNode(new Point(location.x + 1, location.y + 1), travelCost + (!goingBackwards ? backCost : 0), !goingBackwards, DOWNRIGHT, maxTurns);
 
             if (carDir != DOWNRIGHT)
-                return grid.GetNode(new Point(location.x + 1, location.y + 1), travelCost + turnCost, DOWNRIGHT, maxTurns);
-            return grid.GetNode(new Point(location.x + 1, location.y + 1), travelCost, DOWNRIGHT, turns - 1);
+                return grid.GetNode(new Point(location.x + 1, location.y + 1), travelCost + (goingBackwards ? backCost : 0) + turnCost, goingBackwards, DOWNRIGHT, maxTurns);
+            return grid.GetNode(new Point(location.x + 1, location.y + 1), travelCost + (goingBackwards ? backCost : 0), goingBackwards, DOWNRIGHT, turns - 1);
         }
     }
 
@@ -129,11 +133,11 @@ class Node : IHasNeighbours<Node>
                 return null;
 
             if (carDir == UP || carDir == RIGHT || carDir == UPRIGHT)
-                return grid.GetNode(new Point(location.x - 1, location.y + 1), travelCost + extraCost, DOWNLEFT, maxTurns);
+                return grid.GetNode(new Point(location.x - 1, location.y + 1), travelCost + (!goingBackwards ? backCost : 0), !goingBackwards, DOWNLEFT, maxTurns);
 
             if (carDir != DOWNLEFT)
-                return grid.GetNode(new Point(location.x - 1, location.y + 1), travelCost + turnCost, DOWNLEFT, maxTurns);
-            return grid.GetNode(new Point(location.x - 1, location.y + 1), travelCost, DOWNLEFT, turns - 1);
+                return grid.GetNode(new Point(location.x - 1, location.y + 1), travelCost + (goingBackwards ? backCost : 0) + turnCost, goingBackwards, DOWNLEFT, maxTurns);
+            return grid.GetNode(new Point(location.x - 1, location.y + 1), travelCost + (goingBackwards ? backCost : 0), goingBackwards, DOWNLEFT, turns - 1);
         }
     }
 
@@ -147,11 +151,11 @@ class Node : IHasNeighbours<Node>
                 return null;
 
             if (carDir == UPLEFT || carDir == UPRIGHT || carDir == UP)
-                return grid.GetNode(new Point(location.x, location.y + 1), travelCost + extraCost, DOWN, maxTurns);
+                return grid.GetNode(new Point(location.x, location.y + 1), travelCost + (!goingBackwards ? backCost : 0), !goingBackwards, DOWN, maxTurns);
 
             if (carDir != DOWN)
-                return grid.GetNode(new Point(location.x, location.y + 1), travelCost + turnCost, DOWN, maxTurns);
-            return grid.GetNode(new Point(location.x, location.y + 1), travelCost, DOWN, turns - 1);
+                return grid.GetNode(new Point(location.x, location.y + 1), travelCost + (goingBackwards ? backCost : 0) + turnCost, goingBackwards, DOWN, maxTurns);
+            return grid.GetNode(new Point(location.x, location.y + 1), travelCost + (goingBackwards ? backCost : 0), goingBackwards, DOWN, turns - 1);
         }
     }
 
@@ -165,11 +169,11 @@ class Node : IHasNeighbours<Node>
                 return null;
 
             if (carDir == DOWNRIGHT || carDir == UPRIGHT || carDir == RIGHT)
-                return grid.GetNode(new Point(location.x - 1, location.y), travelCost + extraCost, LEFT, maxTurns);
+                return grid.GetNode(new Point(location.x - 1, location.y), travelCost + (!goingBackwards ? backCost : 0), !goingBackwards, LEFT, maxTurns);
 
             if (carDir != LEFT)
-                return grid.GetNode(new Point(location.x - 1, location.y), travelCost + turnCost, LEFT, maxTurns);
-            return grid.GetNode(new Point(location.x - 1, location.y), travelCost, LEFT, turns - 1);
+                return grid.GetNode(new Point(location.x - 1, location.y), travelCost + (goingBackwards ? backCost : 0) + turnCost, goingBackwards, LEFT, maxTurns);
+            return grid.GetNode(new Point(location.x - 1, location.y), travelCost + (goingBackwards ? backCost : 0), goingBackwards, LEFT, turns - 1);
         }
     }
 
@@ -183,11 +187,11 @@ class Node : IHasNeighbours<Node>
                 return null;
 
             if (carDir == UPLEFT || carDir == DOWNLEFT || carDir == LEFT)
-                return grid.GetNode(new Point(location.x + 1, location.y), travelCost + extraCost, RIGHT, maxTurns);
+                return grid.GetNode(new Point(location.x + 1, location.y), travelCost + (!goingBackwards ? backCost : 0), !goingBackwards, RIGHT, maxTurns);
 
             if (carDir != RIGHT)
-                return grid.GetNode(new Point(location.x + 1, location.y), travelCost + turnCost, RIGHT, maxTurns);
-            return grid.GetNode(new Point(location.x + 1, location.y), travelCost, RIGHT, turns - 1);
+                return grid.GetNode(new Point(location.x + 1, location.y), travelCost + (goingBackwards ? backCost : 0) + turnCost, goingBackwards, RIGHT, maxTurns);
+            return grid.GetNode(new Point(location.x + 1, location.y), travelCost + (goingBackwards ? backCost : 0), goingBackwards, RIGHT, turns - 1);
         }
     }
 

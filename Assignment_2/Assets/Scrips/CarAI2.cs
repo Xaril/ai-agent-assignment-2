@@ -282,6 +282,12 @@ namespace UnityStandardAssets.Vehicles.Car
                 return;
             }
             Gizmos.color = Color.red;
+
+            foreach(Vector3 path in mscPath)
+            {
+                Gizmos.DrawCube(path, Vector3.one);
+            }
+
             for (int i = 0; i <= currentPathIndex; ++i)
             {
                 if (finalPath[i] != null)

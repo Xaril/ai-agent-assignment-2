@@ -136,13 +136,13 @@ class Grid
         this.height = height;
     }
 
-    public Node GetNode(Point location, int cost, int carDir = -1, int turns = 0)
+    public Node GetNode(Point location, int cost, bool goingBackwards, int carDir = -1, int turns = 0)
     {
         if (IsOnGrid(location.x, location.y))
         {
 
-               cost += costgrid.GetCost(location.x, location.y);
-            return new Node(location, cost, this, carDir, turns);
+            cost += costgrid.GetCost(location.x, location.y);
+            return new Node(location, cost, this,goingBackwards, carDir, turns);
         }
 
         return null;

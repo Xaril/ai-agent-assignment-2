@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.44657838, g: 0.49641234, b: 0.57481676, a: 1}
+  m_IndirectSpecularColor: {r: 0.44657898, g: 0.4964133, b: 0.5748178, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -17486,7 +17486,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &468917172
 Transform:
   m_ObjectHideFlags: 0
@@ -17581,6 +17581,9 @@ MonoBehaviour:
   terrain_manager_game_object: {fileID: 1677047333}
   friends: []
   enemies: []
+  pathFinder: {fileID: 1688991406}
+  maxVelocity: 0
+  acceleration: 0
 --- !u!114 &468917176
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -17943,6 +17946,9 @@ MonoBehaviour:
   terrain_manager_game_object: {fileID: 1677047333}
   friends: []
   enemies: []
+  pathFinder: {fileID: 1688991406}
+  maxVelocity: 0
+  acceleration: 0
 --- !u!114 &492361547
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -29432,6 +29438,9 @@ MonoBehaviour:
   terrain_manager_game_object: {fileID: 1677047333}
   friends: []
   enemies: []
+  pathFinder: {fileID: 1688991406}
+  maxVelocity: 0
+  acceleration: 0
 --- !u!114 &792701571
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -29451,7 +29460,7 @@ MonoBehaviour:
     time_array: []
     file_name: 
     json_string: 
-  RecordingOn: 1
+  RecordingOn: 0
   PlaybackOn: 0
   position_list: []
   rotation_list: []
@@ -67086,11 +67095,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 1688991406}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1edfa829da9824c6581dcb3dc24cc65f, type: 3}
+  m_Script: {fileID: 11500000, guid: bafd6170a58540e43809d128d62bb386, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   manager: {fileID: 1677047334}
   enemies: []
+  players: []
+  path: []
 --- !u!4 &1688991408
 Transform:
   m_ObjectHideFlags: 0
