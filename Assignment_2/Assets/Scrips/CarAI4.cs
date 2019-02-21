@@ -42,7 +42,7 @@ namespace UnityStandardAssets.Vehicles.Car
         private void Start()
         {
             Time.timeScale = 1;
-            maxVelocity = 20;
+            maxVelocity = 30;
             acceleration = 1f;
 
             timeStep = 0.05f;
@@ -90,7 +90,7 @@ namespace UnityStandardAssets.Vehicles.Car
             steerDirection = SteerInput(m_Car.transform.position, m_Car.transform.eulerAngles.y, followPoint);
             accelerationDirection = AccelerationInput(m_Car.transform.position, m_Car.transform.eulerAngles.y, followPoint);
 
-            if ((m_Car.CurrentSpeed >= pointVelocity && Vector3.Distance(followPoint, m_Car.transform.position) < 1) || 
+            if ((m_Car.CurrentSpeed >= pointVelocity && Vector3.Distance(followPoint, m_Car.transform.position) < 5) || 
                 m_Car.CurrentSpeed >= maxVelocity)
             {
                 accelerationDirection = 0;
@@ -98,7 +98,7 @@ namespace UnityStandardAssets.Vehicles.Car
 
             if (accelerationDirection < 0)
             {
-                m_Car.Move(steerDirection, brake, accelerationDirection * acceleration, handBrake);
+                m_Car.Move(-steerDirection, brake, accelerationDirection * acceleration, handBrake);
             }
             else
             {

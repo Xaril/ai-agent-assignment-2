@@ -26,7 +26,7 @@ class Node : IHasNeighbours<Node>
     private static readonly int maxTurns = 3;
 
     private static readonly int extraCost = 250;
-    private static readonly int turnCost = 2;
+    private static readonly int turnCost = 5;
 
     public Node(Point location, int cost, Grid grid, int carDir = -1, int turns = 0)
     {
