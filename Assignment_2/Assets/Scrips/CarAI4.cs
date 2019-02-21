@@ -41,11 +41,13 @@ namespace UnityStandardAssets.Vehicles.Car
 
         int index_leader;
         float angle;
+        float spacing;
+        Vector3 offset = Vector3.zero;
 
         private void Start()
         {
             Time.timeScale = 1;
-            maxVelocity = 40;
+            maxVelocity = 60;
             acceleration = 1f;
 
             timeStep = 0.05f;
@@ -67,7 +69,8 @@ namespace UnityStandardAssets.Vehicles.Car
 
             InitializeCSpace();
 
-            angle = 60;
+            angle = 90;
+            spacing = 18f;
 
             // note that both arrays will have holes when objects are destroyed
             // but for initial planning they should work
@@ -133,25 +136,32 @@ namespace UnityStandardAssets.Vehicles.Car
             averageAngle /= friends.Length;
             averageAngle *= Mathf.Deg2Rad;
 
-            Vector3 offset;
             Transform leader = GameObject.FindWithTag("leader").transform;
+
+            float actualSpacingLeft = spacing;
+            float actualSpacingRight = spacing;
+            while(terrain_manager.myInfo.traversability[terrain_manager.myInfo.get_i_index((leader.position + Quaternion.AngleAxis(angle, leader.up) * -leader.forward * 3 * actualSpacingLeft).x), terrain_manager.myInfo.get_j_index((leader.position + Quaternion.AngleAxis(angle, leader.up) * -leader.forward * 3 * actualSpacingLeft).z)] > 0.5f)
+            {
+                actualSpacingLeft -= spacing / 3f;
+            }
+            while (terrain_manager.myInfo.traversability[terrain_manager.myInfo.get_i_index((leader.position + Quaternion.AngleAxis(-angle, leader.up) * -leader.forward * 3 * actualSpacingRight).x), terrain_manager.myInfo.get_j_index((leader.position + Quaternion.AngleAxis(-angle, leader.up) * -leader.forward * 3 * actualSpacingRight).z)] > 0.5f)
+            {
+                actualSpacingRight -= spacing / 3f;
+            }
+
             switch (carNumber)
             {
                 case 0:
-                    offset = Quaternion.AngleAxis(angle, leader.up) * -leader.forward * 15f;
-                    //offset = new Vector3(0, 0, -25);//new Vector3(-10 * Mathf.Cos(averageAngle), 0, 10 * Mathf.Sin(averageAngle));
+                    offset = Vector3.Lerp(offset, Quaternion.AngleAxis(angle, leader.up) * -leader.forward * actualSpacingLeft, Time.deltaTime);
                     break;
                 case 1:
-                    offset = Quaternion.AngleAxis(angle, leader.up) * -leader.forward * 30f;
-                    //offset = new Vector3(0, 0, -12.5f);
+                    offset = Vector3.Lerp(offset, Quaternion.AngleAxis(angle, leader.up) * -leader.forward * 3 * actualSpacingLeft, Time.deltaTime);
                     break;
                 case 2:
-                    offset = Quaternion.AngleAxis(-angle, leader.up) * -leader.forward * 15f;
-                    //offset = new Vector3(0, 0, 12.5f);
+                    offset = Vector3.Lerp(offset, Quaternion.AngleAxis(-angle, leader.up) * -leader.forward * actualSpacingRight, Time.deltaTime);
                     break;
                 default:
-                    offset = Quaternion.AngleAxis(-angle, leader.up) * -leader.forward * 30f;
-                    //offset = new Vector3(0, 0, 25);//new Vector3(10 * Mathf.Cos(averageAngle), 0, 10 * Mathf.Sin(averageAngle));
+                    offset = Vector3.Lerp(offset, Quaternion.AngleAxis(-angle, leader.up) * -leader.forward * 3 * actualSpacingRight, Time.deltaTime);
                     break;
             }
 
@@ -189,6 +199,10 @@ namespace UnityStandardAssets.Vehicles.Car
 
         private void OnDrawGizmos()
         {
+            if (!Application.isPlaying)
+            {
+                return;
+            }
             float car_length = 4.47f, car_width = 2.43f, car_high = 2f;
             float scale = 1f;
             Vector3 cube_size = new Vector3(car_width * scale, car_high * scale, car_length * scale);
@@ -196,47 +210,8 @@ namespace UnityStandardAssets.Vehicles.Car
             Gizmos.color = Color.blue;
 
             Transform leader = GameObject.FindWithTag("leader").transform;
-
-            Gizmos.matrix = leader.localToWorldMatrix;
-            // Leader
-            Gizmos.DrawWireCube(new Vector3(0f, 0f, 0f), cube_size);
-            // Other cars
-            Gizmos.DrawWireCube(Quaternion.AngleAxis(angle, Vector3.up) * -Vector3.forward * 15f, cube_size);
-            Gizmos.DrawWireCube(Quaternion.AngleAxis(angle, Vector3.up) * -Vector3.forward * 30f, cube_size);
-            Gizmos.DrawWireCube(Quaternion.AngleAxis(-angle, Vector3.up) * -Vector3.forward * 15f, cube_size);
-            Gizmos.DrawWireCube(Quaternion.AngleAxis(-angle, Vector3.up) * -Vector3.forward * 30f, cube_size);
-
-            Gizmos.DrawSphere(Quaternion.AngleAxis(angle, Vector3.up) * -Vector3.forward * 15f, 1f);
-            Gizmos.DrawSphere(Quaternion.AngleAxis(angle, Vector3.up) * -Vector3.forward * 30f, 1f);
-            Gizmos.DrawSphere(Quaternion.AngleAxis(-angle, Vector3.up) * -Vector3.forward * 15f, 1f);
-            Gizmos.DrawSphere(Quaternion.AngleAxis(-angle, Vector3.up) * -Vector3.forward * 30f, 1f);
+            Gizmos.DrawSphere(leader.position + offset, 1f);
 
         }
-
-
-        //private void OnDrawGizmos()
-        //{
-        //    if (!Application.isPlaying)
-        //    {
-        //        return;
-        //    }
-
-
-        //    Gizmos.color = Color.blue;
-        //    float car_length = 4.47f, car_width = 2.43f, car_high = 2f;
-        //    float scale = 1.5f;
-        //    var car_leader = GameObject.FindGameObjectsWithTag("Player")[index_leader];
-        //    Vector3 pos_leader = car_leader.transform.position;
-
-        //    Gizmos.matrix = car_leader.transform.localToWorldMatrix;
-
-        //    Vector3 cube_size = new Vector3(car_width * scale, car_high * scale, car_length * scale);
-
-        //    Gizmos.DrawWireCube(Vector3.zero, cube_size);
-
-
-
-
-        //}
     }
 }
