@@ -39,10 +39,12 @@ namespace UnityStandardAssets.Vehicles.Car
         Vector3 previousPoint;
         int carNumber;
 
+        int index_leader;
+
         private void Start()
         {
             Time.timeScale = 1;
-            maxVelocity = 20;
+            maxVelocity = 200;
             acceleration = 1f;
 
             timeStep = 0.05f;
@@ -73,6 +75,11 @@ namespace UnityStandardAssets.Vehicles.Car
             carNumber = 0;
             for (int i = 0; i < friends.Length; ++i)
             {
+                // We might find a better way to identify the replay car
+                if (friends[i].name == "ReplayCar (2)")
+                {
+                    this.index_leader = i;
+                }
                 if (friends[i].name == this.name)
                 {
                     carNumber = i;
@@ -84,7 +91,7 @@ namespace UnityStandardAssets.Vehicles.Car
         private void FixedUpdate()
         {
             previousPoint = followPoint;
-            followPoint = FindFollowPoint();
+            followPoint = GameObject.FindGameObjectsWithTag("Player")[index_leader].transform.position; // FindFollowPoint();
             float pointVelocity = Vector3.Distance(previousPoint, followPoint) / Time.deltaTime;
 
             steerDirection = SteerInput(m_Car.transform.position, m_Car.transform.eulerAngles.y, followPoint);
@@ -167,5 +174,39 @@ namespace UnityStandardAssets.Vehicles.Car
             configurationSpace.BoxSize = carCollider.transform.TransformVector(carCollider.size);
             m_Car.transform.rotation = carRotation;
         }
+
+        //private void PerfectFormationPositions()
+        //{
+
+        //}
+
+        private void OnDrawGizmos()
+        {
+            if (!Application.isPlaying)
+            {
+                return;
+            }
+            
+
+            Gizmos.color = Color.blue;
+            float car_length = 4.47f, car_width = 2.43f, car_high = 2f;
+            float scale = 1.5f;
+            var car_leader = GameObject.FindGameObjectsWithTag("Player")[index_leader];
+            Vector3 pos_leader = car_leader.transform.position;
+
+            Gizmos.matrix = car_leader.transform.localToWorldMatrix;
+
+            Vector3 cube_size = new Vector3(car_width*scale, car_high*scale, car_length*scale);
+
+            Gizmos.DrawWireCube(Vector3.zero, cube_size);
+
+
+
+
+        }
+    
+
     }
+
+    
 }
