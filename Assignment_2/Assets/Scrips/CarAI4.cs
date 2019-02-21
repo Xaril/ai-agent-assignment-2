@@ -46,7 +46,7 @@ namespace UnityStandardAssets.Vehicles.Car
         private void Start()
         {
             Time.timeScale = 1;
-            maxVelocity = 60;
+            maxVelocity = 30;
             acceleration = 1f;
 
             timeStep = 0.05f;

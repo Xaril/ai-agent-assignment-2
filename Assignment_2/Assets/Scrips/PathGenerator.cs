@@ -7,9 +7,9 @@ public class PathGenerator
     private AStar aStar;
     private Grid grid;
 
-    public PathGenerator(TerrainManager terrain_manager)
+    public PathGenerator(TerrainManager terrain_manager, CostGridCell[,] turretCost)
     {
-        grid = new Grid(terrain_manager);
+        grid = new Grid(terrain_manager, turretCost);
     }
 
     public List<Vector3> GetPath(Point startPoint, Point endPoint, float carangle)

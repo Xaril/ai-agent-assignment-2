@@ -10,23 +10,36 @@ public class CreateGridCost: MonoBehaviour
     public TerrainManager manager;
     public GameObject[] enemies;
 
+    List<Vector3> path;
+
     private int turretRangeCost = 20;
 
     public void Start()
     {
         enemies = GameObject.FindGameObjectsWithTag("Enemy");
+        Debug.Log(enemies.Length);
         GenerateGrid();
-        //enemies[5] = null;
         GenerateCosts();
+
+
+        Point startPoint = new Point(420, 100);
+        Point endPoint = new Point(250, 180);
+
+
+        //PathGenerator aStar = new PathGenerator(manager, grid);
+        //path = aStar.GetPath(startPoint, endPoint, transform.rotation.eulerAngles.y);
+
     }
 
+    int i = 0;
     public void FixedUpdate()
     {
-        
+        i++;
+        if (i % 8 == 0) x++;
     }
 
     private void GenerateCosts()
-    { 
+    {
         foreach (GameObject turret in enemies)
         {
             if (turret == null) continue;
@@ -40,7 +53,7 @@ public class CreateGridCost: MonoBehaviour
                 // Does the ray intersect any objects excluding the player layer
                 if (!Physics.Raycast(turret.transform.position + direction, direction, out hit, distance, layer_mask))
                 {
-                    cell.cost += turretRangeCost;
+                    cell.cost *= turretRangeCost;
                 }
             }
         }
@@ -71,9 +84,17 @@ public class CreateGridCost: MonoBehaviour
     }
 
 
-
+    private int x = 0;
     private void OnDrawGizmos()
     {
+        if (path != null)
+        {
+            Gizmos.color = Color.blue;
+            for (int i = 0; i < x; i++)
+            {
+                Gizmos.DrawCube(path[i], Vector3.one);
+            }
+        }
 
         if (grid == null) return;
         for (int i = 0; i < width; i++)
@@ -85,15 +106,18 @@ public class CreateGridCost: MonoBehaviour
                 if (grid[i,j].cost < 20)
                 {
                     Gizmos.color = Color.green;
-                } else if (grid[i, j].cost < 40)
+                } else if (grid[i, j].cost < 400)
                 {
                     Gizmos.color = Color.yellow;
-                } else if (grid[i, j].cost < 60)
+                } else if (grid[i, j].cost < 8000)
                 {
                     Gizmos.color = new Color(1.0f, 0.64f, 0.0f); ; //orange
-                } else
+                } else if (grid[i,j].cost < 160000)
                 {
                     Gizmos.color = Color.red;
+                } else
+                {
+                    Gizmos.color = Color.black;
                 }
 
                 //Gizmos.color = Color.Lerp(Color.green, Color.red, Mathf.InverseLerp(0, enemies.Length * turretRangeCost, grid[i, j].cost));
@@ -114,7 +138,7 @@ public class CostGridCell
     {
         this.position = position;
         this.isObstacle = isObstacle;
-        this.cost = 0;
+        this.cost = 1;
     }
 }
 
