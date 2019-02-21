@@ -46,7 +46,7 @@ namespace UnityStandardAssets.Vehicles.Car
         private void Start()
         {
             Time.timeScale = 1;
-            maxVelocity = 30;
+            maxVelocity = 150;
             acceleration = 1f;
 
             timeStep = 0.05f;
@@ -200,7 +200,7 @@ namespace UnityStandardAssets.Vehicles.Car
                 actualSpacingRight--;
             }
 
-            float invLerpSpeed = 5;
+            float invLerpSpeed = 5f;
 
             switch (carNumber)
             {
