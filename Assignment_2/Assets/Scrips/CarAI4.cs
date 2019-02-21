@@ -39,6 +39,11 @@ namespace UnityStandardAssets.Vehicles.Car
         Vector3 previousPoint;
         int carNumber;
 
+        int index_leader;
+        float angle;
+        float spacing;
+        Vector3 offset = Vector3.zero;
+
         private void Start()
         {
             Time.timeScale = 1;
@@ -64,6 +69,8 @@ namespace UnityStandardAssets.Vehicles.Car
 
             InitializeCSpace();
 
+            angle = 90;
+            spacing = 18f;
 
             // note that both arrays will have holes when objects are destroyed
             // but for initial planning they should work
@@ -90,20 +97,25 @@ namespace UnityStandardAssets.Vehicles.Car
             steerDirection = SteerInput(m_Car.transform.position, m_Car.transform.eulerAngles.y, followPoint);
             accelerationDirection = AccelerationInput(m_Car.transform.position, m_Car.transform.eulerAngles.y, followPoint);
 
-            if ((m_Car.CurrentSpeed >= pointVelocity && Vector3.Distance(followPoint, m_Car.transform.position) < 5) || 
-                m_Car.CurrentSpeed >= maxVelocity)
-            {
-                accelerationDirection = 0;
-            }
 
-            if (accelerationDirection < 0)
+            if ((m_Car.CurrentSpeed >= pointVelocity && Vector3.Distance(followPoint, m_Car.transform.position) < 5) ||
+                m_Car.CurrentSpeed >= maxVelocity)
+
+                if (m_Car.CurrentSpeed >= pointVelocity + Vector3.Distance(followPoint, m_Car.transform.position))
+                {
+                    accelerationDirection = 0;
+                }
+                else if (m_Car.CurrentSpeed >= maxVelocity)
+                    m_Car.Move(-steerDirection, brake, accelerationDirection * acceleration, handBrake);
+            if (Vector3.Distance(followPoint, m_Car.transform.position) < 5)
             {
-                m_Car.Move(-steerDirection, brake, accelerationDirection * acceleration, handBrake);
+                m_Car.Move(steerDirection, brake, accelerationDirection * acceleration, handBrake);
             }
             else
             {
-                m_Car.Move(steerDirection, accelerationDirection * acceleration, -brake, handBrake);
+                m_Car.Move(-steerDirection, brake, accelerationDirection * acceleration, handBrake);
             }
+
         }
 
         private Vector3 FindFollowPoint()
@@ -119,25 +131,32 @@ namespace UnityStandardAssets.Vehicles.Car
             averageAngle /= friends.Length;
             averageAngle *= Mathf.Deg2Rad;
 
-            Vector3 offset;
             Transform leader = GameObject.FindWithTag("leader").transform;
+
+            float actualSpacingLeft = spacing;
+            float actualSpacingRight = spacing;
+            while(terrain_manager.myInfo.traversability[terrain_manager.myInfo.get_i_index((leader.position + Quaternion.AngleAxis(angle, leader.up) * -leader.forward * 3 * actualSpacingLeft).x), terrain_manager.myInfo.get_j_index((leader.position + Quaternion.AngleAxis(angle, leader.up) * -leader.forward * 3 * actualSpacingLeft).z)] > 0.5f)
+            {
+                actualSpacingLeft -= spacing / 3f;
+            }
+            while (terrain_manager.myInfo.traversability[terrain_manager.myInfo.get_i_index((leader.position + Quaternion.AngleAxis(-angle, leader.up) * -leader.forward * 3 * actualSpacingRight).x), terrain_manager.myInfo.get_j_index((leader.position + Quaternion.AngleAxis(-angle, leader.up) * -leader.forward * 3 * actualSpacingRight).z)] > 0.5f)
+            {
+                actualSpacingRight -= spacing / 3f;
+            }
+
             switch (carNumber)
             {
                 case 0:
-                    offset = Quaternion.AngleAxis(45, leader.up) * -leader.forward * 12.5f;
-                    //offset = new Vector3(0, 0, -25);//new Vector3(-10 * Mathf.Cos(averageAngle), 0, 10 * Mathf.Sin(averageAngle));
+                    offset = Vector3.Lerp(offset, Quaternion.AngleAxis(angle, leader.up) * -leader.forward * actualSpacingLeft, Time.deltaTime);
                     break;
                 case 1:
-                    offset = Quaternion.AngleAxis(45, leader.up) * -leader.forward * 25f;
-                    //offset = new Vector3(0, 0, -12.5f);
+                    offset = Vector3.Lerp(offset, Quaternion.AngleAxis(angle, leader.up) * -leader.forward * 3 * actualSpacingLeft, Time.deltaTime);
                     break;
                 case 2:
-                    offset = Quaternion.AngleAxis(-45, leader.up) * -leader.forward * 12.5f;
-                    //offset = new Vector3(0, 0, 12.5f);
+                    offset = Vector3.Lerp(offset, Quaternion.AngleAxis(-angle, leader.up) * -leader.forward * actualSpacingRight, Time.deltaTime);
                     break;
                 default:
-                    offset = Quaternion.AngleAxis(-45, leader.up) * -leader.forward * 25f;
-                    //offset = new Vector3(0, 0, 25);//new Vector3(10 * Mathf.Cos(averageAngle), 0, 10 * Mathf.Sin(averageAngle));
+                    offset = Vector3.Lerp(offset, Quaternion.AngleAxis(-angle, leader.up) * -leader.forward * 3 * actualSpacingRight, Time.deltaTime);
                     break;
             }
 
@@ -175,13 +194,18 @@ namespace UnityStandardAssets.Vehicles.Car
 
         private void OnDrawGizmos()
         {
+            if (!Application.isPlaying)
+            {
+                return;
+            }
+            float car_length = 4.47f, car_width = 2.43f, car_high = 2f;
+            float scale = 1f;
+            Vector3 cube_size = new Vector3(car_width * scale, car_high * scale, car_length * scale);
+
             Gizmos.color = Color.blue;
 
             Transform leader = GameObject.FindWithTag("leader").transform;
-            Gizmos.DrawSphere(leader.position + Quaternion.AngleAxis(45, leader.up) * -leader.forward * 12.5f, 1f);
-            Gizmos.DrawSphere(leader.position + Quaternion.AngleAxis(45, leader.up) * -leader.forward * 25f, 1f);
-            Gizmos.DrawSphere(leader.position + Quaternion.AngleAxis(-45, leader.up) * -leader.forward * 12.5f, 1f);
-            Gizmos.DrawSphere(leader.position + Quaternion.AngleAxis(-45, leader.up) * -leader.forward * 25f, 1f);
+            Gizmos.DrawSphere(leader.position + offset, 1f);
 
         }
     }
