@@ -39,6 +39,7 @@ namespace UnityStandardAssets.Vehicles.Car
         Vector3 previousPoint;
         int carNumber;
 
+        int index_leader;
         float angle;
 
         private void Start()
@@ -188,14 +189,54 @@ namespace UnityStandardAssets.Vehicles.Car
 
         private void OnDrawGizmos()
         {
+            float car_length = 4.47f, car_width = 2.43f, car_high = 2f;
+            float scale = 1f;
+            Vector3 cube_size = new Vector3(car_width * scale, car_high * scale, car_length * scale);
+
             Gizmos.color = Color.blue;
 
             Transform leader = GameObject.FindWithTag("leader").transform;
-            Gizmos.DrawSphere(leader.position + Quaternion.AngleAxis(angle, leader.up) * -leader.forward * 15f, 1f);
-            Gizmos.DrawSphere(leader.position + Quaternion.AngleAxis(angle, leader.up) * -leader.forward * 30f, 1f);
-            Gizmos.DrawSphere(leader.position + Quaternion.AngleAxis(-angle, leader.up) * -leader.forward * 15f, 1f);
-            Gizmos.DrawSphere(leader.position + Quaternion.AngleAxis(-angle, leader.up) * -leader.forward * 30f, 1f);
+
+            Gizmos.matrix = leader.localToWorldMatrix;
+            // Leader
+            Gizmos.DrawWireCube(new Vector3(0f, 0f, 0f), cube_size);
+            // Other cars
+            Gizmos.DrawWireCube(Quaternion.AngleAxis(angle, Vector3.up) * -Vector3.forward * 15f, cube_size);
+            Gizmos.DrawWireCube(Quaternion.AngleAxis(angle, Vector3.up) * -Vector3.forward * 30f, cube_size);
+            Gizmos.DrawWireCube(Quaternion.AngleAxis(-angle, Vector3.up) * -Vector3.forward * 15f, cube_size);
+            Gizmos.DrawWireCube(Quaternion.AngleAxis(-angle, Vector3.up) * -Vector3.forward * 30f, cube_size);
+
+            Gizmos.DrawSphere(Quaternion.AngleAxis(angle, Vector3.up) * -Vector3.forward * 15f, 1f);
+            Gizmos.DrawSphere(Quaternion.AngleAxis(angle, Vector3.up) * -Vector3.forward * 30f, 1f);
+            Gizmos.DrawSphere(Quaternion.AngleAxis(-angle, Vector3.up) * -Vector3.forward * 15f, 1f);
+            Gizmos.DrawSphere(Quaternion.AngleAxis(-angle, Vector3.up) * -Vector3.forward * 30f, 1f);
 
         }
+
+
+        //private void OnDrawGizmos()
+        //{
+        //    if (!Application.isPlaying)
+        //    {
+        //        return;
+        //    }
+
+
+        //    Gizmos.color = Color.blue;
+        //    float car_length = 4.47f, car_width = 2.43f, car_high = 2f;
+        //    float scale = 1.5f;
+        //    var car_leader = GameObject.FindGameObjectsWithTag("Player")[index_leader];
+        //    Vector3 pos_leader = car_leader.transform.position;
+
+        //    Gizmos.matrix = car_leader.transform.localToWorldMatrix;
+
+        //    Vector3 cube_size = new Vector3(car_width * scale, car_high * scale, car_length * scale);
+
+        //    Gizmos.DrawWireCube(Vector3.zero, cube_size);
+
+
+
+
+        //}
     }
 }
