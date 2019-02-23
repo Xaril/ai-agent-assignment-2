@@ -14,7 +14,7 @@ public class PathGenerator
 
     public List<Vector3> GetPath(Point startPoint, Point endPoint, float carangle)
     {
-        aStar = new AStar(grid);
+        this.aStar = new AStar(grid);
         aStar.init(startPoint.x - grid.xlow, startPoint.y - grid.zlow, endPoint.x - grid.xlow, endPoint.y - grid.zlow, carangle);
         aStar.findPath();
         Debug.LogError(aStar.result.Count);

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using System;
 
-
 namespace UnityStandardAssets.Vehicles.Car
 {
     [RequireComponent(typeof(CarController))]
@@ -40,6 +39,8 @@ namespace UnityStandardAssets.Vehicles.Car
         private float crashDirection;
         private Vector3 previousPosition;
         private ConfigurationSpace configurationSpace;
+
+        private static int[][] cost_matrix; // is symmetric
 
         private void Start()
         {
@@ -84,13 +85,16 @@ namespace UnityStandardAssets.Vehicles.Car
                 }
             }
 
-            List<Vector3> points = new List<Vector3>();
+            List<Vector3> enemy_positions = new List<Vector3>();
             for(int i = 0; i < enemies.Length; ++i)
             {
-                points.Add(enemies[i].transform.position);
+                enemy_positions.Add(enemies[i].transform.position);
             }
 
-            List<Vector3> route = TSP.GenerateCarPaths(TSP.GreedyPath(points))[carNumber];
+            //InitCostMatrix(enemy_positions);
+            
+
+            List<Vector3> route = TSP.GenerateCarPaths(TSP.GreedyPath(enemy_positions))[carNumber];
 
             Point startPoint = new Point((int)transform.position.x, (int)transform.position.z);
             Point endPoint = new Point((int)route[0].x, (int)route[0].z);
@@ -98,6 +102,7 @@ namespace UnityStandardAssets.Vehicles.Car
 
             PathGenerator aStar = new PathGenerator(terrain_manager);
             List<Vector3> startPath = aStar.GetPath(startPoint, endPoint, transform.rotation.eulerAngles.y);
+            
             finalPath = startPath;
             vrpPath = new List<Vector3>();
             for (int i = 0; i < route.Count; ++i)
@@ -122,9 +127,57 @@ namespace UnityStandardAssets.Vehicles.Car
 
         }
 
+        private void InitCostMatrix(List<Vector3> points)
+        {
+            if (cost_matrix != null)
+            {
+                return;
+            }
+            cost_matrix = new int[enemies.Length][];
+
+            for (int i = 0; i < enemies.Length; i++)
+            {
+                cost_matrix[i] = new int[enemies.Length];
+            }
+            
+            PathGenerator aStar = new PathGenerator(terrain_manager);
+
+            // Compute every cost
+            int count = 0;
+            System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
+            sw.Start();
+            for (int i = 0; i < enemies.Length; i++)
+            {
+                for (int j = 0; j < i; j++)
+                {
+
+                    if (i == j)
+                    {
+                        continue;
+                    }
+
+                    count++;
+                    Point start_point = new Point((int)points[i].x, (int)points[i].z);
+                    Point end_point = new Point((int)points[j].x, (int)points[j].z);
+                    Debug.Log(string.Format("i: {0}, j: {1}", i, j));
+                    Debug.Log(string.Format("({0},{1}) ({2}, {3})", start_point.x, start_point.y, end_point.x, end_point.y));
+                    Debug.Log(string.Format("n: {0}", count));
+                    
+                    List<Vector3> path = aStar.GetPath(start_point, end_point, 0f);
+
+                    cost_matrix[i][j] = cost_matrix[j][i] = path.Count;
+                    Debug.Log(string.Format("From {0} to {1}: {2}",
+                        points[i], points[j], cost_matrix[i][j]));
+                }
+            }
+            sw.Stop();
+            Debug.Log(string.Format("Time elapsed: {0}", sw.Elapsed));
+
+        }
+
         private void FixedUpdate()
         {
-
+            return;
             if (Vector3.Distance(finalPath[currentPathIndex], transform.position) <= distanceOffset)
             {
                 currentPathIndex++;
