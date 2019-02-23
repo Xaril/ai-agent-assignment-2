@@ -10,7 +10,9 @@ class AStar : MonoBehaviour
     Grid grid;
 
     public static int getDistance(Point current, Point goal) {
-        return Math.Max(Math.Abs(current.x - goal.x) , Math.Abs(current.y - goal.y)) / 100;
+        return 0;
+        //return (int)(new Vector2(current.x, current.y) - new Vector2(goal.x, goal.y)).magnitude / 100;
+        return Math.Max(Math.Abs(current.x - goal.x), Math.Abs(current.y - goal.y)) / 5;
     }
 
     public void setGrid(Grid grid)
@@ -48,8 +50,8 @@ class AStar : MonoBehaviour
 
     public void findPath()
     {
-        Node startNode = new Node(start, 1, grid, carStartDir);
-        Node endNode = new Node(end, 1, grid);
+        Node startNode = new Node(start, 1, grid, false, carStartDir);
+        Node endNode = new Node(end, 1, grid, false);
 
         solution = AStar.FindPath<Node>(startNode, endNode, (p1, p2) => { return AStar.getDistance(p1.location, p2.location); }, (p1) => { return AStar.getDistance(p1.location, end); });
 

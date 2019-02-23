@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.44657868, g: 0.49641263, b: 0.57481706, a: 1}
+  m_IndirectSpecularColor: {r: 0.44657838, g: 0.49641234, b: 0.57481676, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -11574,7 +11574,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: de0a9b23fa3784d75b3bdd0088f57e67, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  trajectory_filename: Text/SlowLeader2
+  trajectory_filename: Text/Traj_sweep_leader_slow
   recordedInfo:
     position_array: []
     rotation_array: []
@@ -17296,7 +17296,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 02125d181a5354fe6b661b4831900cfd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  target_object: {fileID: 1471962240}
+  target_object: {fileID: 327483146}
   behind: 5
   above: 2
 --- !u!81 &395794776
@@ -52861,7 +52861,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1217671292
 MonoBehaviour:
   m_ObjectHideFlags: 0

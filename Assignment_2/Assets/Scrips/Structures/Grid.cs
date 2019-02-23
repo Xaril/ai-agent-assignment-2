@@ -12,13 +12,15 @@ class Grid
     public readonly int xlow, zlow;
 
     private readonly CostGrid costgrid;
+    private CostGridCell[,] turretCost;
+
 
     public int getCost(int x, int y)
     {
         return costgrid.GetCost(x, y);
     }
 
-    public Grid(TerrainManager manager)
+    public Grid(TerrainManager manager, CostGridCell[,] turretCost)
     {
         xlow = (int)manager.myInfo.x_low;
         zlow = (int)manager.myInfo.z_low;
@@ -26,6 +28,7 @@ class Grid
         int zhigh = (int)manager.myInfo.z_high;
         width = xhigh - xlow;
         height = zhigh - zlow;
+        this.turretCost = turretCost;
 
         int[,] tmpMaze = new int[width, height];
 
@@ -45,7 +48,7 @@ class Grid
         maze = tmpMaze.Clone() as int[,];
         //makeWallOffset(offset);
         //blockImpossible();
-        costgrid = new CostGrid(this);
+        costgrid = new CostGrid(this, turretCost);
 
     }
 
@@ -133,13 +136,13 @@ class Grid
         this.height = height;
     }
 
-    public Node GetNode(Point location, int cost, int carDir = -1, int turns = 0)
+    public Node GetNode(Point location, int cost, bool goingBackwards, int carDir = -1, int turns = 0)
     {
         if (IsOnGrid(location.x, location.y))
         {
 
-               cost += costgrid.GetCost(location.x, location.y);
-            return new Node(location, cost, this, carDir, turns);
+            cost += costgrid.GetCost(location.x, location.y);
+            return new Node(location, cost, this,goingBackwards, carDir, turns);
         }
 
         return null;

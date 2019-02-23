@@ -10,13 +10,15 @@ namespace Assets.Scrips.Extras.Structures
         private readonly Grid maze;
         private readonly int[,] costGrid;
         private readonly int width, height;
+        private CostGridCell[,] turretCost;
 
-        public CostGrid(Grid maze)
+        public CostGrid(Grid maze, CostGridCell[,] turretCost)
         {
             this.maze = maze;
             width = maze.maze.GetLength(0);
             height = maze.maze.GetLength(1);
             costGrid = new int[width, height];
+            this.turretCost = turretCost; 
             init();
         }
 
@@ -147,8 +149,8 @@ namespace Assets.Scrips.Extras.Structures
         public int GetCost(int x, int y)
         {
             if (x >= 0 && y >= 0 && x < width && y < height)
-                return costGrid[x,y];
-            return 99999999;
+                return costGrid[x,y] + (turretCost != null ? turretCost[x,y].cost : 0);
+            return int.MaxValue;
         }
 
     }

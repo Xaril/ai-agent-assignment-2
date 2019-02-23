@@ -101,7 +101,7 @@ namespace UnityStandardAssets.Vehicles.Car
             Point endPoint = new Point((int)path[0].x, (int)path[0].z);
 
 
-            PathGenerator aStar = new PathGenerator(terrain_manager);
+            PathGenerator aStar = new PathGenerator(terrain_manager, null);
             List<Vector3> startPath = aStar.GetPath(startPoint, endPoint, transform.rotation.eulerAngles.y);
             finalPath = startPath;
             mscPath = new List<Vector3>();
@@ -282,6 +282,12 @@ namespace UnityStandardAssets.Vehicles.Car
                 return;
             }
             Gizmos.color = Color.red;
+
+            foreach(Vector3 path in mscPath)
+            {
+                Gizmos.DrawCube(path, Vector3.one);
+            }
+
             for (int i = 0; i <= currentPathIndex; ++i)
             {
                 if (finalPath[i] != null)
