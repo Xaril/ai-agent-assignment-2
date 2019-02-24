@@ -140,7 +140,7 @@ namespace UnityStandardAssets.Vehicles.Car
                 cost_matrix[i] = new int[enemies.Length];
             }
             
-            PathGenerator aStar = new PathGenerator(terrain_manager);
+            PathGenerator aStar = new PathGenerator(terrain_manager,null);
 
             // Compute every cost
             int count = 0;

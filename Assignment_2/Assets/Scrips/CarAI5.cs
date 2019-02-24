@@ -69,7 +69,7 @@ namespace UnityStandardAssets.Vehicles.Car
             friends = GameObject.FindGameObjectsWithTag("Player");
             enemies = GameObject.FindGameObjectsWithTag("Enemy");
 
-            finalPath = pathFinder.GetComponent<CreateGridCost>().path;
+            finalPath = pathFinder.GetComponent<CreateGridCost>().path[0];
 
             Debug.Log(finalPath.Count);
         }
@@ -77,7 +77,7 @@ namespace UnityStandardAssets.Vehicles.Car
 
         private void FixedUpdate()
         {
-
+            return;
             if (currentPathIndex >= finalPath.Count) return;
 
             if (Vector3.Distance(finalPath[currentPathIndex], transform.position) <= distanceOffset)

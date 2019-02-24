@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Newtonsoft.Json;
 
 public class CreateGridCost: MonoBehaviour
 {
@@ -11,37 +12,85 @@ public class CreateGridCost: MonoBehaviour
     public GameObject[] enemies;
     public GameObject[] players;
     private readonly int minAreaOffset = 4;
+    public bool recodingOn = true;
+    public bool readFromFile = false;
+    public string path_filename = "Text/P5";
 
-    public List<Vector3> path;
+
+
+    public List<List<Vector3>> path;
 
     private readonly int turretRangeCost = 20;
 
+    private float start_time;
+
     public void Start()
     {
+        start_time = Time.realtimeSinceStartup;
         enemies = GameObject.FindGameObjectsWithTag("Enemy");
+        /*
+        enemies[5].SetActive(false);
+        enemies[5] = null;
+        enemies[2].SetActive(false);
+        enemies[2] = null;
+        enemies[6].SetActive(false);
+        enemies[6] = null;
+        enemies[7].SetActive(false);
+        enemies[7] = null;
+        enemies[4].SetActive(false);
+        enemies[4] = null;
+        enemies[1].SetActive(false);
+        enemies[1] = null; */
         players = GameObject.FindGameObjectsWithTag("Player");
-        Point startPoint = new Point((int) players[0].transform.position.x, (int)players[0].transform.position.z);
+        if(readFromFile)
+        {
+            var jsonTextFile = Resources.Load<TextAsset>(path_filename);
+            path = JsonConvert.DeserializeObject<List<List<Vector3>>>(jsonTextFile.text);
+        } else
+        {
+            path = new List<List<Vector3>>();
+            Point startPoint = new Point((int)players[0].transform.position.x, (int)players[0].transform.position.z);
+            //Point startPoint = new Point((int)308.5, (int)389.5);
 
-        GenerateGrid();
-        GenerateCosts();
+            GenerateGrid();
+            GenerateCosts();
 
-        this.path = FindPath(startPoint, players[0].transform.rotation.eulerAngles.y);
+            FindPath(startPoint, players[0].transform.rotation.eulerAngles.y);
 
-
+            
+            if(recodingOn)
+            {
+                string json_string = JsonConvert.SerializeObject(path);
+                Debug.Log(json_string);
+                string filePath = Application.dataPath + "/Resources/Text/P5.json";
+                System.IO.File.WriteAllText(filePath, json_string);
+                #if UNITY_EDITOR
+                    UnityEditor.AssetDatabase.Refresh();
+                #endif
+            }
+        }
+        Debug.Log("elapsed time: " + (Time.realtimeSinceStartup - start_time));
     }
 
-    private void GetAdjesantArea(int i, int j, int cost,  ref bool[,] isIncluded,  ref Vector3 positionSum, ref int numberOfCells)
+    private void GetAdjesantArea(int x, int y, int cost,  ref bool[,] isIncluded,  ref Vector3 positionSum, ref int numberOfCells)
     {
-        if (isIncluded[i, j] || grid[i, j].isObstacle) return;
-        if(grid[i,j].cost == cost)
+        Stack<CostGridCell> stack = new Stack<CostGridCell>();
+        stack.Push(grid[x,y]);
+        while(stack.Count > 0)
         {
-            isIncluded[i, j] = true;
-            positionSum += grid[i, j].position;
-            numberOfCells++;
-            GetAdjesantArea(i + 1, j, cost, ref isIncluded, ref positionSum, ref numberOfCells);
-            GetAdjesantArea(i - 1, j, cost, ref isIncluded, ref positionSum, ref numberOfCells);
-            GetAdjesantArea(i, j + 1, cost, ref isIncluded, ref positionSum, ref numberOfCells);
-            GetAdjesantArea(i, j - 1, cost, ref isIncluded, ref positionSum, ref numberOfCells);
+            CostGridCell cell = stack.Pop();
+            int i = cell.i;
+            int j = cell.j;
+            if (grid[i, j].cost == cost && !isIncluded[i, j] && !grid[i, j].isObstacle)
+            {
+                isIncluded[i, j] = true;
+                positionSum += grid[i, j].position;
+                numberOfCells++;
+                stack.Push(grid[i + 1, j]);
+                stack.Push(grid[i - 1, j]);
+                stack.Push(grid[i, j + 1]);
+                stack.Push(grid[i, j - 1]);
+            }
         }
     }
 
@@ -63,18 +112,15 @@ public class CreateGridCost: MonoBehaviour
         }
     }
 
-    private List<Vector3> FindPath(Point startPoint, float angle)
+    private void FindPath(Point startPoint, float angle)
     {
-        List<Vector3> path = new List<Vector3>();
         Point point = startPoint;
-        for(int i = 0; i < 4; i++)
+        for(int i = 0; i < enemies.Length; i++)
         {
             List<SameCostArea> oneTurretAreas = FindAreas(turretRangeCost);
-            path.AddRange(FindBestPath(point, 0f, oneTurretAreas));
-            point = new Point((int)path[path.Count - 1].x, (int)path[path.Count - 1].z);
+            path.Add(FindBestPath(point, 0f, oneTurretAreas));
+            point = new Point((int)path[path.Count - 1][path[path.Count - 1].Count - 1].x, (int)path[path.Count - 1][path[path.Count - 1].Count - 1].z);
         }
-
-        return path;
     }
 
     private List<Vector3> FindBestPath(Point startPoint, float angle, List<SameCostArea> areas)
@@ -97,7 +143,10 @@ public class CreateGridCost: MonoBehaviour
             {
                 int i = (int)(v.x - xlow);
                 int j = (int)(v.z - zlow);
-                currentPathCost += grid[i,j].cost;
+                if(grid[i,j].cost != turretRangeCost)
+                {
+                    currentPathCost += grid[i, j].cost;
+                }  
             }
 
             if(currentPathCost <= minPathCost)
@@ -120,6 +169,8 @@ public class CreateGridCost: MonoBehaviour
             if (!Physics.Raycast(enemies[i].transform.position + direction, direction, out hit, distance - 0.5f, layer_mask))
             {
                 UpdateCostGrid(i);
+                //enemies[i].SetActive(false);
+                enemies[i] = null;
             }
         }
 
@@ -221,7 +272,7 @@ public class CreateGridCost: MonoBehaviour
                 int tmp_x = manager.myInfo.get_i_index(xlow + j);
                 int tmp_z = manager.myInfo.get_j_index(zlow + i);
                 int canTraverse = (int)manager.myInfo.traversability[tmp_x, tmp_z];
-                grid[j, i] = new CostGridCell(new Vector3(j + xlow + 0.5f, 0f, i+zlow + 0.5f), canTraverse == 1);
+                grid[j, i] = new CostGridCell(new Vector3(j + xlow + 0.5f, 0f, i+zlow + 0.5f), canTraverse == 1, j, i);
             }
         }
 
@@ -230,11 +281,19 @@ public class CreateGridCost: MonoBehaviour
 
     private void OnDrawGizmos()
     {
-        Gizmos.color = Color.blue;
+        
         if (path == null) return;
-        foreach(Vector3 p in path)
+
+        foreach(List<Vector3> p in path)
         {
-            Gizmos.DrawCube(p, Vector3.one);
+            Gizmos.color = Color.blue;
+            for (int i = 1; i < p.Count - 1; i++)
+            {
+                Gizmos.DrawCube(p[i], Vector3.one);
+            }
+            Gizmos.color = Color.red;
+            Gizmos.DrawCube(p[p.Count - 1], Vector3.one);
+
         }
         return;
         if (grid == null) return;
@@ -274,12 +333,16 @@ public class CostGridCell
     public Vector3 position;
     public bool isObstacle;
     public int cost;
+    public int i;
+    public int j;
 
-    public CostGridCell(Vector3 position, bool isObstacle)
+    public CostGridCell(Vector3 position, bool isObstacle, int i, int j)
     {
         this.position = position;
         this.isObstacle = isObstacle;
         this.cost = 1;
+        this.i = i;
+        this.j = j;
     }
 }
 
