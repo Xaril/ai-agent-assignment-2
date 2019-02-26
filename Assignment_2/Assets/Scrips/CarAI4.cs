@@ -43,6 +43,8 @@ namespace UnityStandardAssets.Vehicles.Car
         float spacing;
         Vector3 offset = Vector3.zero;
 
+        bool circularPattern;
+
         private void Start()
         {
             Time.timeScale = 1;
@@ -68,8 +70,11 @@ namespace UnityStandardAssets.Vehicles.Car
 
             InitializeCSpace();
 
+            circularPattern = false;
+
             angle = 90;
-            spacing = 20f;
+            spacing = 20;
+
 
             // note that both arrays will have holes when objects are destroyed
             // but for initial planning they should work
@@ -82,6 +87,10 @@ namespace UnityStandardAssets.Vehicles.Car
                 if (friends[i].name == this.name)
                 {
                     carNumber = i;
+                    if (circularPattern)
+                    {
+                        angle = carNumber * 90 + 45;
+                    }
                     break;
                 }
             }
@@ -92,6 +101,10 @@ namespace UnityStandardAssets.Vehicles.Car
             previousPoint = followPoint;
             followPoint = FindFollowPoint();
             float pointVelocity = Vector3.Distance(previousPoint, followPoint) / Time.deltaTime;
+            if (circularPattern)
+            {
+                angle += Time.deltaTime * 15;
+            }
 
             if (!crashed)
             {
@@ -176,17 +189,7 @@ namespace UnityStandardAssets.Vehicles.Car
 
         private Vector3 FindFollowPoint()
         {
-            Vector3 averagePosition = Vector3.zero;
-            float averageAngle = 0;
-            foreach(GameObject friend in friends)
-            {
-                averagePosition += friend.transform.position;
-                averageAngle += friend.transform.eulerAngles.y;
-            }
-            averagePosition /= friends.Length;
-            averageAngle /= friends.Length;
-            averageAngle *= Mathf.Deg2Rad;
-
+           
             Transform leader = GameObject.FindWithTag("leader").transform;
 
             float actualSpacingLeft = spacing;
@@ -202,20 +205,27 @@ namespace UnityStandardAssets.Vehicles.Car
 
             float invLerpSpeed = 5f;
 
-            switch (carNumber)
+            if(circularPattern)
             {
-                case 0:
-                    offset = Vector3.Lerp(offset, Quaternion.AngleAxis(angle, leader.up) * -leader.forward * actualSpacingLeft, Time.deltaTime / invLerpSpeed);
-                    break;
-                case 1:
-                    offset = Vector3.Lerp(offset, Quaternion.AngleAxis(angle, leader.up) * -leader.forward * 3 * actualSpacingLeft, Time.deltaTime / invLerpSpeed);
-                    break;
-                case 2:
-                    offset = Vector3.Lerp(offset, Quaternion.AngleAxis(-angle, leader.up) * -leader.forward * actualSpacingRight, Time.deltaTime / invLerpSpeed);
-                    break;
-                default:
-                    offset = Vector3.Lerp(offset, Quaternion.AngleAxis(-angle, leader.up) * -leader.forward * 3 * actualSpacingRight, Time.deltaTime / invLerpSpeed);
-                    break;
+                offset = Vector3.Lerp(offset, Quaternion.AngleAxis(angle, leader.up) * -Vector3.forward * spacing, Time.deltaTime / invLerpSpeed);
+            }
+            else
+            {
+                switch (carNumber)
+                {
+                    case 0:
+                        offset = Vector3.Lerp(offset, Quaternion.AngleAxis(angle, leader.up) * -leader.forward * actualSpacingLeft, Time.deltaTime / invLerpSpeed);
+                        break;
+                    case 1:
+                        offset = Vector3.Lerp(offset, Quaternion.AngleAxis(angle, leader.up) * -leader.forward * 3 * actualSpacingLeft, Time.deltaTime / invLerpSpeed);
+                        break;
+                    case 2:
+                        offset = Vector3.Lerp(offset, Quaternion.AngleAxis(-angle, leader.up) * -leader.forward * actualSpacingRight, Time.deltaTime / invLerpSpeed);
+                        break;
+                    default:
+                        offset = Vector3.Lerp(offset, Quaternion.AngleAxis(-angle, leader.up) * -leader.forward * 3 * actualSpacingRight, Time.deltaTime / invLerpSpeed);
+                        break;
+                }
             }
 
             bool collision = false;
@@ -229,7 +239,7 @@ namespace UnityStandardAssets.Vehicles.Car
                 offset *= 0.5f;
             }
 
-            return leader.position + offset;
+            return leader.position + (circularPattern ? leader.forward * 20 : Vector3.zero) + offset;
         }
 
         //Determines steer angle for the car
