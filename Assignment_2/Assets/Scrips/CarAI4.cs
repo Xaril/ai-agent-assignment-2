@@ -70,10 +70,10 @@ namespace UnityStandardAssets.Vehicles.Car
 
             InitializeCSpace();
 
-            circularPattern = false;
+            circularPattern = true;
 
             angle = 90;
-            spacing = 20;
+            spacing = circularPattern ? 50 : 20;
 
 
             // note that both arrays will have holes when objects are destroyed
@@ -89,7 +89,7 @@ namespace UnityStandardAssets.Vehicles.Car
                     carNumber = i;
                     if (circularPattern)
                     {
-                        angle = carNumber * 90 + 45;
+                        angle = carNumber * 90 - 45;
                     }
                     break;
                 }
@@ -103,7 +103,7 @@ namespace UnityStandardAssets.Vehicles.Car
             float pointVelocity = Vector3.Distance(previousPoint, followPoint) / Time.deltaTime;
             if (circularPattern)
             {
-                angle += Time.deltaTime * 15;
+                angle += Time.deltaTime * 10;
             }
 
             if (!crashed)
@@ -148,21 +148,7 @@ namespace UnityStandardAssets.Vehicles.Car
                     accelerationDirection = 0;
                 }
 
-                if (accelerationDirection < 0)
-                {
-                    if(Vector3.Distance(followPoint, m_Car.transform.position) < 5)
-                    {
-                        m_Car.Move(steerDirection, brake, accelerationDirection * acceleration, handBrake);
-                    }
-                    else
-                    {
-                        m_Car.Move(-steerDirection, brake, accelerationDirection * acceleration, handBrake);
-                    }
-                }
-                else
-                {
-                    m_Car.Move(steerDirection, accelerationDirection * acceleration, -brake, handBrake);
-                }
+                m_Car.Move(steerDirection, accelerationDirection * acceleration, -brake, handBrake);
             }
             else
             {
@@ -207,7 +193,12 @@ namespace UnityStandardAssets.Vehicles.Car
 
             if(circularPattern)
             {
-                offset = Vector3.Lerp(offset, Quaternion.AngleAxis(angle, leader.up) * -Vector3.forward * spacing, Time.deltaTime / invLerpSpeed);
+                float actualSpacingCircle = spacing;
+                while(CheckSpacingCircle(actualSpacingCircle))
+                {
+                    actualSpacingCircle--;
+                }
+                offset = Vector3.Lerp(offset, Quaternion.AngleAxis(angle, leader.up) * -Vector3.forward * actualSpacingCircle, Time.deltaTime / invLerpSpeed);
             }
             else
             {
@@ -229,7 +220,7 @@ namespace UnityStandardAssets.Vehicles.Car
             }
 
             bool collision = false;
-            while(terrain_manager.myInfo.traversability[terrain_manager.myInfo.get_i_index((leader.position + offset).x), terrain_manager.myInfo.get_j_index((leader.position + offset).z)] > 0.5f)
+            while(terrain_manager.myInfo.traversability[terrain_manager.myInfo.get_i_index((leader.position + (circularPattern ? leader.forward * 20 : Vector3.zero) + offset).x), terrain_manager.myInfo.get_j_index((leader.position + (circularPattern ? leader.forward * 20 : Vector3.zero) + offset).z)] > 0.5f)
             {
                 offset *= 0.9f;
                 collision = true;
@@ -304,6 +295,24 @@ namespace UnityStandardAssets.Vehicles.Car
             return collision;
         }
 
+        private bool CheckSpacingCircle(float spacingCircle)
+        {
+            Transform leader = GameObject.FindWithTag("leader").transform;
+            bool collision = false;
+            int radius = 1;
+            int x = (int)Mathf.Round(Mathf.Sin(Mathf.Deg2Rad * leader.eulerAngles.y));
+            int z = (int)Mathf.Round(Mathf.Cos(Mathf.Deg2Rad * leader.eulerAngles.y));
+            for (int i = -radius; i <= radius; ++i)
+            {
+                for (int j = -radius; j <= radius; ++j)
+                {
+                    collision = collision || terrain_manager.myInfo.traversability[terrain_manager.myInfo.get_i_index(i + (leader.position + leader.forward * 20 + Quaternion.AngleAxis(angle, leader.up) * -Vector3.forward * spacingCircle).x), terrain_manager.myInfo.get_j_index(j + (leader.position + leader.forward * 20 + Quaternion.AngleAxis(angle, leader.up) * -Vector3.forward * spacingCircle).z)] > 0.5f;
+                    collision = collision || terrain_manager.myInfo.traversability[x + terrain_manager.myInfo.get_i_index(i + (leader.position + leader.forward * 20 + Quaternion.AngleAxis(angle, leader.up) * -Vector3.forward * spacingCircle).x), z + terrain_manager.myInfo.get_j_index(j + (leader.position + leader.forward * 20 + Quaternion.AngleAxis(angle, leader.up) * -Vector3.forward * spacingCircle).z)] > 0.5f;
+                }
+            }
+            return collision;
+        }
+
         private void OnDrawGizmos()
         {
             if (!Application.isPlaying)
@@ -317,7 +326,7 @@ namespace UnityStandardAssets.Vehicles.Car
             Gizmos.color = Color.blue;
 
             Transform leader = GameObject.FindWithTag("leader").transform;
-            Gizmos.DrawSphere(leader.position + offset, 1f);
+            Gizmos.DrawSphere(leader.position + (circularPattern ? leader.forward * 20 : Vector3.zero) + offset, 1f);
         }
     }
 }
