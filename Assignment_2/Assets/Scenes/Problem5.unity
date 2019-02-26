@@ -67101,8 +67101,8 @@ MonoBehaviour:
   manager: {fileID: 1677047334}
   enemies: []
   players: []
-  recodingOn: 0
-  readFromFile: 1
+  recodingOn: 1
+  readFromFile: 0
   path_filename: Text/P5
 --- !u!4 &1688991408
 Transform:

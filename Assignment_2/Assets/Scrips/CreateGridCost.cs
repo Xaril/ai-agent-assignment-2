@@ -40,7 +40,10 @@ public class CreateGridCost: MonoBehaviour
         enemies[4].SetActive(false);
         enemies[4] = null;
         enemies[1].SetActive(false);
-        enemies[1] = null; */
+        enemies[1] = null;
+        enemies[0].SetActive(false);
+        enemies[0] = null;
+        */
         players = GameObject.FindGameObjectsWithTag("Player");
         if(readFromFile)
         {
@@ -108,6 +111,7 @@ public class CreateGridCost: MonoBehaviour
             if (!Physics.Raycast(turret.transform.position + direction, direction, out hit, distance - 0.5f, layer_mask))
             {
                 cell.cost /= turretRangeCost;
+                cell.turretCover[indexOfDestroyedTurret] = false;
             }
         }
     }
@@ -143,10 +147,7 @@ public class CreateGridCost: MonoBehaviour
             {
                 int i = (int)(v.x - xlow);
                 int j = (int)(v.z - zlow);
-                if(grid[i,j].cost != turretRangeCost)
-                {
-                    currentPathCost += grid[i, j].cost;
-                }  
+                currentPathCost += grid[i, j].turretCover[area.turretIndex] ? grid[i, j].cost/turretRangeCost : grid[i, j].cost;
             }
 
             if(currentPathCost <= minPathCost)
@@ -157,20 +158,15 @@ public class CreateGridCost: MonoBehaviour
             }
         }
 
+        int iGrid = (int)(path[path.Count - 1].x - xlow);
+        int jGrid = (int)(path[path.Count - 1].z - zlow);
 
-        for(int i = 0; i < enemies.Length;i++)
+        for(int s = 0; s < enemies.Length; s++)
         {
-            if (enemies[i] == null) continue;
-            float distance = (enemies[i].transform.position - path[path.Count - 1]).magnitude;
-            Vector3 direction = (path[path.Count - 1] - enemies[i].transform.position).normalized;
-            RaycastHit hit;
-            int layer_mask = LayerMask.GetMask("CubeWalls");
-            // Does the ray intersect any objects excluding the player layer
-            if (!Physics.Raycast(enemies[i].transform.position + direction, direction, out hit, distance - 0.5f, layer_mask))
+            if(grid[iGrid,jGrid].turretCover[s] && enemies[s] != null)
             {
-                UpdateCostGrid(i);
-                //enemies[i].SetActive(false);
-                enemies[i] = null;
+                UpdateCostGrid(s);
+                enemies[s] = null;
             }
         }
 
@@ -197,7 +193,14 @@ public class CreateGridCost: MonoBehaviour
                     Vector3 averagePosition =  positionSum / numberOfCells;
                     if (CheckIfAreaBigEnough(averagePosition, cost))
                     {
-                        list.Add(new SameCostArea(averagePosition,numberOfCells,cost));
+                        for(int index = 0; index < enemies.Length; index++)
+                        {
+                            if(grid[i,j].turretCover[index] && enemies[index] != null)
+                            {
+                                list.Add(new SameCostArea(averagePosition, numberOfCells, cost,index));
+                                break;
+                            }
+                        }
                     }
                 }
             }
@@ -235,20 +238,21 @@ public class CreateGridCost: MonoBehaviour
 
     private void GenerateCosts()
     {
-        foreach (GameObject turret in enemies)
+        for(int i = 0; i < enemies.Length; i++)
         {
-            if (turret == null) continue;
+            if (enemies[i] == null) continue;
             foreach (CostGridCell cell in grid)
             {
                 if (cell.isObstacle) continue;
-                float distance = (turret.transform.position - cell.position).magnitude;
-                Vector3 direction = (cell.position - turret.transform.position).normalized;
+                float distance = (enemies[i].transform.position - cell.position).magnitude;
+                Vector3 direction = (cell.position - enemies[i].transform.position).normalized;
                 RaycastHit hit;
                 int layer_mask = LayerMask.GetMask("CubeWalls");
                 // Does the ray intersect any objects excluding the player layer
-                if (!Physics.Raycast(turret.transform.position + direction, direction, out hit, distance - 0.5f, layer_mask))
+                if (!Physics.Raycast(enemies[i].transform.position + direction, direction, out hit, distance - 0.5f, layer_mask))
                 {
                     cell.cost *= turretRangeCost;
+                    cell.turretCover[i] = true;
                 }
             }
         }
@@ -272,7 +276,7 @@ public class CreateGridCost: MonoBehaviour
                 int tmp_x = manager.myInfo.get_i_index(xlow + j);
                 int tmp_z = manager.myInfo.get_j_index(zlow + i);
                 int canTraverse = (int)manager.myInfo.traversability[tmp_x, tmp_z];
-                grid[j, i] = new CostGridCell(new Vector3(j + xlow + 0.5f, 0f, i+zlow + 0.5f), canTraverse == 1, j, i);
+                grid[j, i] = new CostGridCell(new Vector3(j + xlow + 0.5f, 0f, i+zlow + 0.5f), canTraverse == 1, j, i, enemies.Length);
             }
         }
 
@@ -332,17 +336,19 @@ public class CostGridCell
 {
     public Vector3 position;
     public bool isObstacle;
+    public bool[] turretCover;
     public int cost;
     public int i;
     public int j;
 
-    public CostGridCell(Vector3 position, bool isObstacle, int i, int j)
+    public CostGridCell(Vector3 position, bool isObstacle, int i, int j, int nrOfTurrets)
     {
         this.position = position;
         this.isObstacle = isObstacle;
         this.cost = 1;
         this.i = i;
         this.j = j;
+        this.turretCover = new bool[nrOfTurrets];
     }
 }
 
@@ -351,12 +357,14 @@ public class SameCostArea
     public Vector3 position;
     public int numberOfCells;
     public int cost;
+    public int turretIndex;
 
-    public SameCostArea(Vector3 position, int numberOfCells, int cost)
+    public SameCostArea(Vector3 position, int numberOfCells, int cost, int turretIndex)
     {
         this.position = position;
         this.numberOfCells = numberOfCells;
         this.cost = cost;
+        this.turretIndex = turretIndex;
     }
 }
 
