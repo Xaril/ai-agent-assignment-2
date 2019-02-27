@@ -14,8 +14,6 @@ public class VRP
 
     public VRP(List<Vector3> points, int nrOfCars, TerrainManager terrain_manager)
     {
-        Debug.Log(points.Count);
-        Debug.Log(nrOfCars);
         this.stations = points;
         this.numberOfCars = nrOfCars;
         this.distances = new int[points.Count, points.Count];
@@ -54,15 +52,20 @@ public class VRP
 
     private int CaclulateDistance(ref List<int>[] res)
     {
-        int distance = 0;
+        int maxDistance = 0;
         for(int i = 0; i < res.Length; i++)
         {
-            for(int j = 0; j < res[i].Count - 1; j++)
+            int distance = 0;
+            for (int j = 0; j < res[i].Count - 1; j++)
             {
                 distance += distances[res[i][j], res[i][j + 1]];
             }
+            if(distance > maxDistance)
+            {
+                maxDistance = distance;
+            }
         }
-        return distance;
+        return maxDistance;
     }
 
     private void Solve( )

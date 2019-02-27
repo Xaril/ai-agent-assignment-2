@@ -12,7 +12,7 @@ class AStar : MonoBehaviour
     public static int getDistance(Point current, Point goal) {
         return 0;
         //return (int)(new Vector2(current.x, current.y) - new Vector2(goal.x, goal.y)).magnitude / 100;
-        return Math.Max(Math.Abs(current.x - goal.x), Math.Abs(current.y - goal.y)) / 5;
+        //return Math.Max(Math.Abs(current.x - goal.x), Math.Abs(current.y - goal.y)) / 5;
     }
 
     public void setGrid(Grid grid)

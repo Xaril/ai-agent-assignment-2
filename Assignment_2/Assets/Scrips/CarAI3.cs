@@ -33,6 +33,7 @@ namespace UnityStandardAssets.Vehicles.Car
         private float accelerationDirection;
         private float brake;
         private float handBrake;
+        private int carNumber;
 
         private bool crashed;
         private float crashTime;
@@ -78,12 +79,12 @@ namespace UnityStandardAssets.Vehicles.Car
 
             Debug.Log(string.Format("Number of friends: {0}", friends.Length));
 
-            int carNumber = 0;
+            this.carNumber = 0;
             for (int i = 0; i < friends.Length; ++i)
             {
                 if (friends[i].name == this.name)
                 {
-                    carNumber = i;
+                    this.carNumber = i;
                     break;
                 }
             }
@@ -95,11 +96,10 @@ namespace UnityStandardAssets.Vehicles.Car
             Point endPoint = new Point((int)route[0].x, (int)route[0].z);
 
 
-            PathGenerator aStar = new PathGenerator(terrain_manager,null);
+            PathGenerator aStar = new PathGenerator(terrain_manager, null);
             List<Vector3> startPath = aStar.GetPath(startPoint, endPoint, transform.rotation.eulerAngles.y);
             
             finalPath = startPath;
-            vrpPath = new List<Vector3>();
             for (int i = 0; i < route.Count; ++i)
             {
                 Point a = new Point((int)route[i].x, (int)route[i].z);
@@ -120,6 +120,7 @@ namespace UnityStandardAssets.Vehicles.Car
                 vrpPath.AddRange(p);
             }
 
+          
         }
 
         private void InitCostMatrix(List<Vector3> points)
@@ -172,7 +173,6 @@ namespace UnityStandardAssets.Vehicles.Car
 
         private void FixedUpdate()
         {
-            return;
             if (Vector3.Distance(finalPath[currentPathIndex], transform.position) <= distanceOffset)
             {
                 currentPathIndex++;
@@ -288,13 +288,11 @@ namespace UnityStandardAssets.Vehicles.Car
             {
                 return;
             }
-            Gizmos.color = Color.red;
-            for (int i = 0; i <= currentPathIndex; ++i)
+            if (carNumber == 0) Gizmos.color = Color.red;
+            else if (carNumber == 1) Gizmos.color = Color.blue;
+            else Gizmos.color = Color.green;
+            for (int i = 0; i <= finalPath.Count; ++i)
             {
-                if (finalPath[i] != null)
-                {
-                    continue;
-                }
                 Gizmos.DrawCube(finalPath[i], Vector3.one);
             }
         }
