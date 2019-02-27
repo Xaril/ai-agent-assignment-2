@@ -18,8 +18,9 @@ namespace UnityStandardAssets.Vehicles.Car
 
         public Dictionary<String, Vector3> initial_positions;
         public List<Vector3> vrpPath;
+        public GameObject VRP;
         private int currentPathIndex = 0;
-        private float distanceOffset = 5f;
+        private readonly float distanceOffset = 5f;
         private List<Vector3> finalPath;
 
         public float maxVelocity;
@@ -39,6 +40,7 @@ namespace UnityStandardAssets.Vehicles.Car
         private float crashDirection;
         private Vector3 previousPosition;
         private ConfigurationSpace configurationSpace;
+        
 
         private static int[][] cost_matrix; // is symmetric
 
@@ -68,6 +70,7 @@ namespace UnityStandardAssets.Vehicles.Car
             InitializeCSpace();
 
 
+
             // note that both arrays will have holes when objects are destroyed
             // but for initial planning they should work
             friends = GameObject.FindGameObjectsWithTag("Player");
@@ -85,16 +88,8 @@ namespace UnityStandardAssets.Vehicles.Car
                 }
             }
 
-            List<Vector3> enemy_positions = new List<Vector3>();
-            for(int i = 0; i < enemies.Length; ++i)
-            {
-                enemy_positions.Add(enemies[i].transform.position);
-            }
 
-            //InitCostMatrix(enemy_positions);
-            
-
-            List<Vector3> route = TSP.GenerateCarPaths(TSP.GreedyPath(enemy_positions))[carNumber];
+            List<Vector3> route = VRP.GetComponent<VRPPathsGenerator>().GetRouteForCar(carNumber);
 
             Point startPoint = new Point((int)transform.position.x, (int)transform.position.z);
             Point endPoint = new Point((int)route[0].x, (int)route[0].z);
