@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class CreateMST : MonoBehaviour
 {
     public List<List<GraphNode>> graph;
+    public List<List<int>> graph_indeces;
     public List<GraphNode> cells;
     public List<List<GraphNode>>[] MSTs;
 
@@ -26,6 +28,7 @@ public class CreateMST : MonoBehaviour
         terrain_manager = terrain_manager_game_object.GetComponent<TerrainManager>();
 
         graph = new List<List<GraphNode>>();
+        graph_indeces = new List<List<int>>();
         cells = new List<GraphNode>();
         gridNoX = terrain_manager.myInfo.x_N;
         gridNoZ = terrain_manager.myInfo.z_N;
@@ -45,18 +48,42 @@ public class CreateMST : MonoBehaviour
                 if (terrain_manager.myInfo.traversability[i, j] > 0.5f)
                 {
                     graph.Add(new List<GraphNode>());
+                    graph_indeces.Add(new List<int>());
                 }
                 else
                 {
                     List<GraphNode> neighbours = FindCellNeighbours(i, j);
                     graph.Add(neighbours);
+                    List<int> neighbours_indeces = new List<int>();
+                    foreach (var neighbor in neighbours)
+                    {
+                        neighbours_indeces.Add(neighbor.ij);
+                    }
+                    graph_indeces.Add(neighbours_indeces);
                 }
             }
         }
-
         MSTs = MSTC();
-        PostProcessTrees();
+        PrintPathOptimalityEvaluation();
+        //PostProcessTrees();
         FindPaths();
+    }
+
+    private void PrintPathOptimalityEvaluation()
+    {
+        int[] counter = new int[n_robots];
+        for (int i = 0; i < cells.Count; i++)
+        {
+            if (pathOf[i] == -1)
+            {
+                continue;
+            }
+            counter[pathOf[i]]++;
+        }
+        for (int i = 0; i < n_robots; i++)
+        {
+            Debug.Log(string.Format("Car: {0}\t Path length: {1}", i, counter[i]));
+        }
     }
 
     private void PostProcessTrees()
@@ -309,9 +336,12 @@ public class CreateMST : MonoBehaviour
         return tree;
     }
 
-    public List<List<GraphNode>>[] MSTC() // Work in progress
+    public List<List<GraphNode>>[] MSTC()
     {
         // Initializiation
+        pathOf = Enumerable.Repeat(-1, cells.Count).ToArray(); // Indicates to which robot's path a cell belongs to
+
+        //List<int[]> starting_positions = initStartingPositions();
         List<int[]> starting_positions = new List<int[]> {
             new int[] {8, 9},
             new int[] {8, 10},
@@ -329,11 +359,6 @@ public class CreateMST : MonoBehaviour
             }
         }
 
-        pathOf = new int[cells.Count]; // Indicates to which robot's path a cell belongs to
-        for (int i = 0; i < pathOf.Length; i++)
-        {
-            pathOf[i] = -1;
-        }
         
         List<List<GraphNode>> remaining_for_robot = new List<List<GraphNode>>();
         bool[][] addedToRemaining = new bool[n_robots][];
@@ -370,16 +395,13 @@ public class CreateMST : MonoBehaviour
                     // Tree cannot be expanded anymore
                     continue;
                 }
-                //Debug.Log(string.Format("Robot: {0}", robot));
                 // For each remaining cell, pick the one farthest from other robots'paths
                 float best_min_dist = float.NegativeInfinity; // The bigger, the better
                 GraphNode best_node = null;
                 foreach (var remaining_node in remaining_for_robot[robot])
                 {
-                    //Debug.Log(string.Format("{0}", remaining_node.ToString()));
-                    // At the moment we use ManhattanDistance (doesn't take obstacles into account)
-                    // We could try BFS
-                    float min_dist = ComputeMinManhattanDistance(remaining_node, robot);
+                    float min_dist = ComputeMinBFSDistance(remaining_node.ij, robot);
+                    //float min_dist = ComputeMinManhattanDistance(remaining_node, robot);
                     if (min_dist > best_min_dist)
                     {
                         best_min_dist = min_dist;
@@ -389,9 +411,7 @@ public class CreateMST : MonoBehaviour
                 // Remove this best candidate from all the remaining lists and block it
                 for (int i = 0; i < n_robots; i++)
                 {
-                    //Debug.Log(string.Format("Len before remove: {0}", remaining_for_robot[i].Count));
                     remaining_for_robot[i].Remove(best_node);
-                    //Debug.Log(string.Format("Len after remove: {0}", remaining_for_robot[i].Count));
                     addedToRemaining[i][best_node.ij] = true;
                 }
                 addNeighbours(best_node, addedToRemaining, remaining_for_robot, robot);
@@ -404,6 +424,32 @@ public class CreateMST : MonoBehaviour
         }
 
         return all_trees;
+    }
+
+    private List<int[]> initStartingPositions()
+    {
+        List<int[]> very_initial_positions = new List<int[]>();
+
+        foreach (var car in GameObject.FindGameObjectsWithTag("Player"))
+        {
+            Vector3 position = car.transform.position;
+            very_initial_positions.Add(
+                new int[] {terrain_manager.myInfo.get_i_index(position.x),
+                           terrain_manager.myInfo.get_j_index(position.z)}
+            );
+        }
+
+        List<int[]> initialFreePositions = new List<int[]>();
+        for (int i = 0; i < n_robots; i++)
+        {
+            int new_robot_position = FindClosestFreePosition(Get1Dindex(very_initial_positions[i][0], very_initial_positions[i][1]), i);
+            pathOf[new_robot_position] = i;
+            initialFreePositions.Add(
+                new int[] {cells[new_robot_position].i, cells[new_robot_position].j}
+            );
+            Debug.Log(string.Format("Car {0}: ({1}, {2})", i, cells[new_robot_position].i, cells[new_robot_position].j));
+        }
+        return initialFreePositions;
     }
 
     private bool AllAreEmpty(List<List<GraphNode>> remaining_for_robot)
@@ -433,12 +479,101 @@ public class CreateMST : MonoBehaviour
         return null;
     }
 
+    private int ComputeMinBFSDistance(int remaining_node, int robot)
+    {
+        // Initialization
+        Queue<int> queue = new Queue<int>();
+        int[] distances = Enumerable.Repeat(-1, cells.Count).ToArray();
+
+        distances[remaining_node] = 0;
+        queue.Enqueue(remaining_node);
+
+        while (queue.Count != 0)
+        {
+            int node = queue.Dequeue();
+
+            // If node belongs to another robot's path, return the distance
+            if (pathOf[node] != robot && pathOf[node] != -1)
+            {
+                return distances[node];
+            }
+
+            foreach (int neighbor_index in graph_indeces[node])
+            {
+                if (distances[neighbor_index] != -1)
+                {
+                    continue;
+                }
+                distances[neighbor_index] = distances[node] + 1;
+                queue.Enqueue(neighbor_index);
+            }
+        }
+
+        Debug.LogError("Oh no! This should never happen! D:\t Check BFS search");
+        return int.MaxValue;
+    }
+
+    private int FindClosestFreePosition(int very_initial_position, int robot)
+    {
+        // Initialization
+        Queue<int> queue = new Queue<int>();
+        int[] distances = Enumerable.Repeat(-1, cells.Count).ToArray();
+        List<int> possible_initial_positions = new List<int>();
+
+        distances[very_initial_position] = 0;
+        queue.Enqueue(very_initial_position);
+
+        while (queue.Count != 0)
+        {
+            int node = queue.Dequeue();
+
+            // If cell is free, add to the list of possible initial positions
+            if (pathOf[node] == -1)
+            {
+                possible_initial_positions.Add(node);
+            }
+
+            if(possible_initial_positions.Count >= 50)
+            {
+                float min_dist = float.MaxValue;
+                int best_pos = -1;
+                foreach (int pos in possible_initial_positions)
+                {
+                    int i = cells[pos].i, j = cells[pos].j;
+                    int v_i = cells[very_initial_position].i, v_j = cells[very_initial_position].j;
+
+                    float distance = Vector2.Distance(
+                        new Vector2(i, j),
+                        new Vector2(v_i, v_j));
+                    if (distance < min_dist)
+                    {
+                        min_dist = distance;
+                        best_pos = pos;
+                    }
+                }
+                return best_pos;
+            }
+
+            foreach (int neighbor_index in graph_indeces[node])
+            {
+                if (distances[neighbor_index] != -1)
+                {
+                    continue;
+                }
+                distances[neighbor_index] = distances[node] + 1;
+                queue.Enqueue(neighbor_index);
+            }
+        }
+
+        Debug.LogError("Oh no! This should never happen! D:\t Check BFS search");
+        return int.MaxValue;
+    }
+
     private int ComputeMinManhattanDistance(GraphNode remaining_node, int robot)
     {
         int i = remaining_node.i, j = remaining_node.j;
         int i_check, j_check, ij_check;
         
-
         for (int manhattan_radius = 0; manhattan_radius < gridNoZ+gridNoX; manhattan_radius++)
         {
             for (int k = 0; k <= manhattan_radius; k++)

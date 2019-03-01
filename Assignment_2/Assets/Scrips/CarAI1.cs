@@ -73,16 +73,8 @@ namespace UnityStandardAssets.Vehicles.Car
             friends = GameObject.FindGameObjectsWithTag("Player");
             enemies = GameObject.FindGameObjectsWithTag("Enemy");
 
-            Debug.Log(string.Format("Number of friends: {0}", friends.Length));
-
-
-            initial_positions = GetInitPos(friends);
             InitCarColors();
 
-            foreach (var pos in initial_positions)
-            {
-                Debug.Log(pos.ToString());
-            }
 
             int carNumber = 0;
             for(int i = 0; i < friends.Length; ++i)
@@ -97,9 +89,7 @@ namespace UnityStandardAssets.Vehicles.Car
             mstPath = mstCreator.GetComponent<CreateMST>().paths[carNumber];
             Point startPoint = new Point((int)transform.position.x, (int)transform.position.z);
             Point endPoint = new Point((int)mstPath[0].x, (int)mstPath[0].z);
-
             
-
             PathGenerator aStar = new PathGenerator(terrain_manager,null);
             List<Vector3> startPath = aStar.GetPath(startPoint, endPoint, transform.rotation.eulerAngles.y);
             finalPath = startPath;
@@ -130,42 +120,6 @@ namespace UnityStandardAssets.Vehicles.Car
                         break;
                 }
             }
-        }
-
-        private Dictionary<String, Vector3> GetInitPos(GameObject[] friends)
-        {
-            Dictionary<String, Vector3> initial_positions = new Dictionary<String, Vector3>();
-
-            for (int i = 0; i < friends.Length; i++)
-            {
-                switch (friends[i].name)
-                {
-                    case "ArmedCar":
-                        initial_positions.Add(friends[i].name,
-                            new Vector3(
-                                terrain_manager.myInfo.get_x_pos(8),
-                                0f,
-                                terrain_manager.myInfo.get_z_pos(9)));
-                        break;
-                    case "ArmedCar (1)":
-                        initial_positions.Add(friends[i].name,
-                            new Vector3(
-                                terrain_manager.myInfo.get_x_pos(8),
-                                0f,
-                                terrain_manager.myInfo.get_z_pos(10)));
-                        break;
-                    case "ArmedCar (2)":
-                        initial_positions.Add(friends[i].name,
-                            new Vector3(
-                                terrain_manager.myInfo.get_x_pos(8),
-                                0f,
-                                terrain_manager.myInfo.get_z_pos(11)));
-                        break;
-                    default:
-                        break;
-                }
-            }
-            return initial_positions;
         }
 
         private void FixedUpdate()
