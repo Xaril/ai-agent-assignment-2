@@ -162,7 +162,7 @@ namespace UnityStandardAssets.Vehicles.Car
 
                 if (accelerationDirection < 0)
                 {
-                    m_Car.Move(-steerDirection, brake, accelerationDirection * acceleration, handBrake);
+                    m_Car.Move(leader ? -steerDirection : steerDirection, brake, accelerationDirection * acceleration, handBrake);
                 }
                 else
                 {
@@ -207,7 +207,12 @@ namespace UnityStandardAssets.Vehicles.Car
             }
 
             float invLerpSpeed = 1f;
-            float spacing = 5f;
+            float spacing = 8f;
+
+            while(CheckSpacing(leaderCar, spacing))
+            {
+                spacing--;
+            }
 
             int dir = -1;
             if(carNumber == (leaderCarNumber + 2) % 3)
@@ -215,9 +220,28 @@ namespace UnityStandardAssets.Vehicles.Car
                 dir = 1;
             }
 
-            offset = Vector3.Lerp(offset, Quaternion.AngleAxis(dir * 45, leaderCar.up) * -leaderCar.forward * spacing, Time.deltaTime / invLerpSpeed);
+            offset = Vector3.Lerp(offset, Quaternion.AngleAxis(dir * 45, leaderCar.up) * -Vector3.forward * spacing, Time.deltaTime / invLerpSpeed);
+
+            bool collision = false;
+            while (terrain_manager.myInfo.traversability[terrain_manager.myInfo.get_i_index((leaderCar.position + offset).x), terrain_manager.myInfo.get_j_index((leaderCar.position + offset).z)] > 0.5f)
+            {
+                offset *= 0.9f;
+                collision = true;
+            }
+            if(collision)
+            {
+                offset *= 0.5f;
+            }
 
             return leaderCar.position + offset;
+        }
+
+        private bool CheckSpacing(Transform leaderCar, float spacing)
+        {
+            Vector3 pos = leaderCar.position + Quaternion.AngleAxis(-45, leaderCar.up) * -Vector3.forward * spacing;
+            Vector3 pos2 = leaderCar.position + Quaternion.AngleAxis(45, leaderCar.up) * -Vector3.forward * spacing;
+            return terrain_manager.myInfo.traversability[terrain_manager.myInfo.get_i_index(pos.x), terrain_manager.myInfo.get_j_index(pos.z)] > 0.5f
+                    || terrain_manager.myInfo.traversability[terrain_manager.myInfo.get_i_index(pos2.x), terrain_manager.myInfo.get_j_index(pos2.z)] > 0.5f;
         }
 
         //Determines steer angle for the car
