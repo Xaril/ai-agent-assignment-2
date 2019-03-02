@@ -38,6 +38,11 @@ namespace UnityStandardAssets.Vehicles.Car
         private int currentPathIndex = 0;
         private readonly int distanceOffset = 3;
         private List<Vector3> finalPath;
+        private int finalPathIndex;
+
+        public bool leader;
+        int carNumber;
+        Vector3 offset = Vector3.zero;
 
         private void Start()
         {
@@ -63,13 +68,25 @@ namespace UnityStandardAssets.Vehicles.Car
             m_Car = GetComponent<CarController>();
             terrain_manager = terrain_manager_game_object.GetComponent<TerrainManager>();
 
+            InitializeCSpace();
 
             // note that both arrays will have holes when objects are destroyed
             // but for initial planning they should work
             friends = GameObject.FindGameObjectsWithTag("Player");
             enemies = GameObject.FindGameObjectsWithTag("Enemy");
 
-            finalPath = pathFinder.GetComponent<CreateGridCost>().path[0];
+            carNumber = 0;
+            for (int i = 0; i < friends.Length; ++i)
+            {
+                if (friends[i].name == this.name)
+                {
+                    carNumber = i;
+                    break;
+                }
+            }
+
+            finalPathIndex = 0;
+            finalPath = pathFinder.GetComponent<CreateGridCost>().path[finalPathIndex];
 
             Debug.Log(finalPath.Count);
         }
@@ -77,46 +94,66 @@ namespace UnityStandardAssets.Vehicles.Car
 
         private void FixedUpdate()
         {
-            return;
-            if (currentPathIndex >= finalPath.Count) return;
-
-            if (Vector3.Distance(finalPath[currentPathIndex], transform.position) <= distanceOffset)
+            Vector3 followPoint;
+            if(leader)
             {
-                currentPathIndex++;
+                if(Vector3.Distance(m_Car.transform.position, finalPath[currentPathIndex]) < 2f &&
+                    currentPathIndex < finalPath.Count - 1)
+                {
+                    currentPathIndex++;
+                }
+                if(currentPathIndex >= finalPath.Count - 1)
+                {
+                    if(enemies.Length != GameObject.FindGameObjectsWithTag("Enemy").Length)
+                    {
+                        enemies = GameObject.FindGameObjectsWithTag("Enemy");
+                        finalPathIndex++;
+                        finalPath = pathFinder.GetComponent<CreateGridCost>().path[finalPathIndex];
+                        currentPathIndex = 0;
+                    }
+                }
+                followPoint = finalPath[currentPathIndex];
+            }
+            else
+            {
+                followPoint = FindFollowPoint();
             }
 
             if (!crashed)
             {
-                time += Time.deltaTime;
-                if (time >= crashCheckTime && Vector3.Distance(m_Car.transform.position, terrain_manager.myInfo.start_pos) > 5)
+                if(!leader || currentPathIndex < finalPath.Count - 1) 
                 {
-                    time = 0;
-                    if (Vector3.Distance(previousPosition, m_Car.transform.position) < 0.1f)
+                    time += Time.deltaTime;
+                    if (time >= crashCheckTime && Vector3.Distance(m_Car.transform.position, terrain_manager.myInfo.start_pos) > 5)
                     {
-                        crashed = true;
-                        if (Physics.BoxCast(
-                            m_Car.transform.position,
-                            new Vector3(configurationSpace.BoxSize.x / 2, configurationSpace.BoxSize.y / 2, 0.5f),
-                            m_Car.transform.forward,
-                            Quaternion.LookRotation(m_Car.transform.forward),
-                            configurationSpace.BoxSize.z / 2
-                        ))
+                        time = 0;
+                        if (Vector3.Distance(previousPosition, m_Car.transform.position) < 0.1f)
                         {
-                            crashDirection = -1;
+                            crashed = true;
+                            if (Physics.BoxCast(
+                                m_Car.transform.position,
+                                new Vector3(configurationSpace.BoxSize.x / 2, configurationSpace.BoxSize.y / 2, 0.5f),
+                                m_Car.transform.forward,
+                                Quaternion.LookRotation(m_Car.transform.forward),
+                                configurationSpace.BoxSize.z / 2
+                            ))
+                            {
+                                crashDirection = -1;
+                            }
+                            else
+                            {
+                                crashDirection = 1;
+                            }
+
                         }
                         else
                         {
-                            crashDirection = 1;
+                            previousPosition = m_Car.transform.position;
                         }
-
-                    }
-                    else
-                    {
-                        previousPosition = m_Car.transform.position;
                     }
                 }
-                steerDirection = SteerInput(m_Car.transform.position, m_Car.transform.eulerAngles.y, finalPath[currentPathIndex]);
-                accelerationDirection = AccelerationInput(m_Car.transform.position, m_Car.transform.eulerAngles.y, finalPath[currentPathIndex]);
+                steerDirection = SteerInput(m_Car.transform.position, m_Car.transform.eulerAngles.y, followPoint);
+                accelerationDirection = AccelerationInput(m_Car.transform.position, m_Car.transform.eulerAngles.y, followPoint);
 
                 if (m_Car.CurrentSpeed >= maxVelocity)
                 {
@@ -137,7 +174,7 @@ namespace UnityStandardAssets.Vehicles.Car
                 crashTime += Time.deltaTime;
                 if (crashTime <= 1f)
                 {
-                    steerDirection = SteerInput(m_Car.transform.position, m_Car.transform.eulerAngles.y, finalPath[currentPathIndex]);
+                    steerDirection = SteerInput(m_Car.transform.position, m_Car.transform.eulerAngles.y, followPoint);
                     if (crashDirection > 0)
                     {
                         m_Car.Move(steerDirection, acceleration, 0, 0);
@@ -153,6 +190,34 @@ namespace UnityStandardAssets.Vehicles.Car
                     crashed = false;
                 }
             }
+        }
+
+        private Vector3 FindFollowPoint()
+        {
+            Transform leaderCar = transform;
+            int leaderCarNumber = 0;
+            foreach(GameObject friend in friends)
+            {
+                if(friend.GetComponent<CarAI5>().leader)
+                {
+                    leaderCar = friend.transform;
+                    leaderCarNumber = friend.GetComponent<CarAI5>().carNumber;
+                    break;
+                }
+            }
+
+            float invLerpSpeed = 1f;
+            float spacing = 5f;
+
+            int dir = -1;
+            if(carNumber == (leaderCarNumber + 2) % 3)
+            {
+                dir = 1;
+            }
+
+            offset = Vector3.Lerp(offset, Quaternion.AngleAxis(dir * 45, leaderCar.up) * -leaderCar.forward * spacing, Time.deltaTime / invLerpSpeed);
+
+            return leaderCar.position + offset;
         }
 
         //Determines steer angle for the car
@@ -182,6 +247,16 @@ namespace UnityStandardAssets.Vehicles.Car
             BoxCollider carCollider = GameObject.Find("ColliderBottom").GetComponent<BoxCollider>();
             configurationSpace.BoxSize = carCollider.transform.TransformVector(carCollider.size);
             m_Car.transform.rotation = carRotation;
+        }
+
+        private void OnDrawGizmos()
+        {
+            if(!Application.isPlaying)
+            {
+                return;
+            }
+
+
         }
     }
 }
