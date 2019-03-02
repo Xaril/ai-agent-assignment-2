@@ -178,17 +178,6 @@ namespace UnityStandardAssets.Vehicles.Car
            
             Transform leader = GameObject.FindWithTag("leader").transform;
 
-            float actualSpacingLeft = spacing;
-            float actualSpacingRight = spacing;
-            while(CheckSpacingLeft(actualSpacingLeft))
-            {
-                actualSpacingLeft--;
-            }
-            while (CheckSpacingRight(actualSpacingRight))
-            {
-                actualSpacingRight--;
-            }
-
             float invLerpSpeed = 5f;
 
             if(circularPattern)
@@ -197,11 +186,26 @@ namespace UnityStandardAssets.Vehicles.Car
                 while(CheckSpacingCircle(actualSpacingCircle))
                 {
                     actualSpacingCircle--;
+                    if(actualSpacingCircle <= 0)
+                    {
+                        break;
+                    }
                 }
                 offset = Vector3.Lerp(offset, Quaternion.AngleAxis(angle, leader.up) * -Vector3.forward * actualSpacingCircle, Time.deltaTime / invLerpSpeed);
             }
             else
             {
+                float actualSpacingLeft = spacing;
+                float actualSpacingRight = spacing;
+                while (CheckSpacingLeft(actualSpacingLeft))
+                {
+                    actualSpacingLeft--;
+                }
+                while (CheckSpacingRight(actualSpacingRight))
+                {
+                    actualSpacingRight--;
+                }
+
                 switch (carNumber)
                 {
                     case 0:
@@ -222,6 +226,10 @@ namespace UnityStandardAssets.Vehicles.Car
             bool collision = false;
             while(terrain_manager.myInfo.traversability[terrain_manager.myInfo.get_i_index((leader.position + (circularPattern ? leader.forward * 20 : Vector3.zero) + offset).x), terrain_manager.myInfo.get_j_index((leader.position + (circularPattern ? leader.forward * 20 : Vector3.zero) + offset).z)] > 0.5f)
             {
+                if(terrain_manager.myInfo.traversability[terrain_manager.myInfo.get_i_index((leader.position + (circularPattern ? leader.forward * 20 : Vector3.zero)).x), terrain_manager.myInfo.get_j_index((leader.position + (circularPattern ? leader.forward * 20 : Vector3.zero)).z)] > 0.5f)
+                {
+                    break;
+                }
                 offset *= 0.9f;
                 collision = true;
             }
