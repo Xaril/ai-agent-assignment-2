@@ -8,14 +8,16 @@ public class CoverNode
     public bool isObstacle;
     public bool isCovered;
     public Vector3[] cornerPositions;
+    public int ij;
 
     private static float gridCellSize = 20f - 2f;
 
-    public CoverNode(Vector3 position, bool isObstacle)
+    public CoverNode(Vector3 position, bool isObstacle, int ij)
     {
         this.position = position;
         this.isObstacle = isObstacle;
         this.isCovered = false;
+        this.ij = ij;
         this.cornerPositions = new Vector3[4];
         cornerPositions[0] = position + new Vector3(gridCellSize/2, 0f, gridCellSize / 2);
         cornerPositions[1] = position + new Vector3(-gridCellSize / 2, 0f, gridCellSize / 2);

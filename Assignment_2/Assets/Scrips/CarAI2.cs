@@ -74,16 +74,6 @@ namespace UnityStandardAssets.Vehicles.Car
             friends = GameObject.FindGameObjectsWithTag("Player");
             enemies = GameObject.FindGameObjectsWithTag("Enemy");
 
-            Debug.Log(string.Format("Number of friends: {0}", friends.Length));
-
-
-            initial_positions = GetInitPos(friends);
-
-            foreach (var pos in initial_positions)
-            {
-                Debug.Log(pos.ToString());
-            }
-
             int carNumber = 0;
             for (int i = 0; i < friends.Length; ++i)
             {
@@ -94,6 +84,7 @@ namespace UnityStandardAssets.Vehicles.Car
                 }
             }
 
+            Debug.Log("Start computing path");
 
             List<Vector3> path = MSC.GetComponent<CreateMSC>().GetPaths()[carNumber];
 
@@ -105,13 +96,13 @@ namespace UnityStandardAssets.Vehicles.Car
             List<Vector3> startPath = aStar.GetPath(startPoint, endPoint, transform.rotation.eulerAngles.y);
             finalPath = startPath;
             mscPath = new List<Vector3>();
-            for(int i = 0; i < path.Count; ++i)
+            for (int i = 0; i < path.Count; ++i)
             {
                 Point a = new Point((int)path[i].x, (int)path[i].z);
-                Point b = new Point((int)path[(i + 1)%path.Count].x, (int)path[(i + 1) % path.Count].z);
+                Point b = new Point((int)path[(i + 1) % path.Count].x, (int)path[(i + 1) % path.Count].z);
 
                 List<Vector3> p;
-                if(i == 0)
+                if (i == 0)
                 {
                     float dir = Quaternion.LookRotation(new Vector3(a.x, 0, a.y) - startPath[startPath.Count - 2]).eulerAngles.y;
                     p = aStar.GetPath(a, b, dir);
@@ -124,43 +115,8 @@ namespace UnityStandardAssets.Vehicles.Car
 
                 mscPath.AddRange(p);
             }
+            Debug.Log("Path computed");
 
-        }
-
-        private Dictionary<String, Vector3> GetInitPos(GameObject[] friends)
-        {
-            Dictionary<String, Vector3> initial_positions = new Dictionary<String, Vector3>();
-
-            for (int i = 0; i < friends.Length; i++)
-            {
-                switch (friends[i].name)
-                {
-                    case "ArmedCar":
-                        initial_positions.Add(friends[i].name,
-                            new Vector3(
-                                terrain_manager.myInfo.get_x_pos(8),
-                                0f,
-                                terrain_manager.myInfo.get_z_pos(9)));
-                        break;
-                    case "ArmedCar (1)":
-                        initial_positions.Add(friends[i].name,
-                            new Vector3(
-                                terrain_manager.myInfo.get_x_pos(8),
-                                0f,
-                                terrain_manager.myInfo.get_z_pos(10)));
-                        break;
-                    case "ArmedCar (2)":
-                        initial_positions.Add(friends[i].name,
-                            new Vector3(
-                                terrain_manager.myInfo.get_x_pos(8),
-                                0f,
-                                terrain_manager.myInfo.get_z_pos(11)));
-                        break;
-                    default:
-                        break;
-                }
-            }
-            return initial_positions;
         }
 
         private void FixedUpdate()
