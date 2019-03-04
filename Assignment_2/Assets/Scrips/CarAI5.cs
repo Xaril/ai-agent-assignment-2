@@ -43,6 +43,7 @@ namespace UnityStandardAssets.Vehicles.Car
         public bool leader;
         int carNumber;
         Vector3 offset = Vector3.zero;
+        float angle;
 
         private void Start()
         {
@@ -84,6 +85,7 @@ namespace UnityStandardAssets.Vehicles.Car
                     break;
                 }
             }
+            angle = 30;
 
             finalPathIndex = 0;
             finalPath = pathFinder.GetComponent<CreateGridCost>().path[finalPathIndex];
@@ -108,8 +110,20 @@ namespace UnityStandardAssets.Vehicles.Car
                     {
                         enemies = GameObject.FindGameObjectsWithTag("Enemy");
                         finalPathIndex++;
-                        finalPath = pathFinder.GetComponent<CreateGridCost>().path[finalPathIndex];
-                        currentPathIndex = 0;
+                        foreach(GameObject friend in friends)
+                        {
+                            CarAI5 friendAI = friend.GetComponent<CarAI5>();
+                            if(friendAI.carNumber == (carNumber + 2) % 3)
+                            {
+                                friendAI.leader = true;
+                                leader = false;
+                                friendAI.finalPathIndex = finalPathIndex;
+                                friendAI.finalPath = pathFinder.GetComponent<CreateGridCost>().path[finalPathIndex];
+                                friendAI.currentPathIndex = 0;
+                                friendAI.enemies = enemies;
+                                break;
+                            }
+                        }
                     }
                 }
                 followPoint = finalPath[currentPathIndex];
@@ -220,7 +234,7 @@ namespace UnityStandardAssets.Vehicles.Car
                 dir = 1;
             }
 
-            offset = Vector3.Lerp(offset, Quaternion.AngleAxis(dir * 45, leaderCar.up) * -Vector3.forward * spacing, Time.deltaTime / invLerpSpeed);
+            offset = Vector3.Lerp(offset, Quaternion.AngleAxis(dir * angle, leaderCar.up) * -Vector3.forward * spacing, Time.deltaTime / invLerpSpeed);
 
             bool collision = false;
             while (terrain_manager.myInfo.traversability[terrain_manager.myInfo.get_i_index((leaderCar.position + offset).x), terrain_manager.myInfo.get_j_index((leaderCar.position + offset).z)] > 0.5f)
@@ -238,8 +252,8 @@ namespace UnityStandardAssets.Vehicles.Car
 
         private bool CheckSpacing(Transform leaderCar, float spacing)
         {
-            Vector3 pos = leaderCar.position + Quaternion.AngleAxis(-45, leaderCar.up) * -Vector3.forward * spacing;
-            Vector3 pos2 = leaderCar.position + Quaternion.AngleAxis(45, leaderCar.up) * -Vector3.forward * spacing;
+            Vector3 pos = leaderCar.position + Quaternion.AngleAxis(-angle, leaderCar.up) * -Vector3.forward * spacing;
+            Vector3 pos2 = leaderCar.position + Quaternion.AngleAxis(angle, leaderCar.up) * -Vector3.forward * spacing;
             return terrain_manager.myInfo.traversability[terrain_manager.myInfo.get_i_index(pos.x), terrain_manager.myInfo.get_j_index(pos.z)] > 0.5f
                     || terrain_manager.myInfo.traversability[terrain_manager.myInfo.get_i_index(pos2.x), terrain_manager.myInfo.get_j_index(pos2.z)] > 0.5f;
         }
@@ -275,12 +289,22 @@ namespace UnityStandardAssets.Vehicles.Car
 
         private void OnDrawGizmos()
         {
-            if(!Application.isPlaying)
+            if(!Application.isPlaying || leader)
             {
                 return;
             }
 
-
+            Transform leaderCar = transform;
+            foreach (GameObject friend in friends)
+            {
+                if (friend.GetComponent<CarAI5>().leader)
+                {
+                    leaderCar = friend.transform;
+                    break;
+                }
+            }
+            Gizmos.color = Color.blue;
+            Gizmos.DrawSphere(leaderCar.position + offset, 1);
         }
     }
 }

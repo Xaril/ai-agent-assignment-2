@@ -17604,7 +17604,7 @@ MonoBehaviour:
     time_array: []
     file_name: 
     json_string: 
-  RecordingOn: 1
+  RecordingOn: 0
   PlaybackOn: 0
   position_list: []
   rotation_list: []
@@ -17915,7 +17915,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &492361545
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -17970,7 +17970,7 @@ MonoBehaviour:
     time_array: []
     file_name: 
     json_string: 
-  RecordingOn: 1
+  RecordingOn: 0
   PlaybackOn: 0
   position_list: []
   rotation_list: []
@@ -29408,7 +29408,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &792701569
 MonoBehaviour:
   m_ObjectHideFlags: 0
