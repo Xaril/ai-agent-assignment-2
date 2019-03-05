@@ -36,7 +36,7 @@ class Chromosome:
             if salesman_fitness > longest_salesman_length:
                 longest_salesman_length = salesman_fitness
                 self.minmax = salesman_fitness
-        self.score = self.cost/self.m + self.minmax
+        self.score = self.cost + self.minmax
 
     # Mutation operator - mutates a single Traveling Salesman
     #  by swaping 2 cities

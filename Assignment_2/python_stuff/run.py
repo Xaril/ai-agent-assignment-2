@@ -15,10 +15,10 @@ if __name__ == '__main__':
     while counted_cities != all_cities:
         counted_cities = 0
 
-        population = Population(population_size=50, adj=cost_matrix, n_salesman=n_salesman)
-        population.run_genetic_algorithm(number_of_iterations=2000,
-                                         mutation_probability=0.7,
-                                         crossover_probability=0.7)
+        population = Population(population_size=1000, adj=cost_matrix, n_salesman=n_salesman)
+        population.run_genetic_algorithm(number_of_iterations=1500,
+                                         mutation_probability=0.5,
+                                         crossover_probability=0.5)
         population.get_best_result()
 
         # # print(cost_matrix)
@@ -62,12 +62,15 @@ if __name__ == '__main__':
         print(f"Tot cities: {all_cities}, visited cities: {counted_cities}")
 
         # Plotting training statistics
-        fig, ax = plt.subplots(nrows=1, ncols=2, figsize=(10,4))
-        ax[0].plot(population.history_tot_cost)
+        fig, ax = plt.subplots(nrows=1, ncols=3, figsize=(4*3,4))
+        ax[0].plot(population.history_score)
         ax[0].set_xlabel('Iteration')
-        ax[0].set_ylabel('Total cost')
-        ax[1].plot(population.history_minmax)
+        ax[0].set_ylabel('Score')
+        ax[1].plot(population.history_tot_cost)
         ax[1].set_xlabel('Iteration')
-        ax[1].set_ylabel('Minmax')
+        ax[1].set_ylabel('Total cost')
+        ax[2].plot(population.history_minmax)
+        ax[2].set_xlabel('Iteration')
+        ax[2].set_ylabel('Minmax')
         fig.show()
 

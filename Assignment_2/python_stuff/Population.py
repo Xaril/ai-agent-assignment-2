@@ -17,6 +17,7 @@ class Population:
 
         self.history_tot_cost = []
         self.history_minmax = []
+        self.history_score = []
 
     # Genetic Algorithm
     def run_genetic_algorithm(self, number_of_iterations=1000, mutation_probability=0.7, crossover_probability=0.7):
@@ -84,6 +85,7 @@ class Population:
         if verbose == 0:
             self.history_minmax.append(best_chromosome.minmax)
             self.history_tot_cost.append(best_chromosome.cost)
+            self.history_score.append(best_chromosome.score)
         if verbose == 1:
             print("Overall cost: ", best_chromosome.cost)
             print("Minmax cost: ", best_chromosome.minmax)
