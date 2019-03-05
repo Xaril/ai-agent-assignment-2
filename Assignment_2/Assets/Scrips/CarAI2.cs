@@ -20,7 +20,7 @@ namespace UnityStandardAssets.Vehicles.Car
         public Dictionary<String, Vector3> initial_positions;
         public List<Vector3> mscPath;
         private int currentPathIndex = 0;
-        private float distanceOffset = 5f;
+        private float distanceOffset = 10f;
         private List<Vector3> finalPath;
 
         public GameObject MSC;
@@ -101,16 +101,8 @@ namespace UnityStandardAssets.Vehicles.Car
                 Point b = new Point((int)path[(i + 1) % path.Count].x, (int)path[(i + 1) % path.Count].z);
 
                 List<Vector3> p;
-                if (i == 0)
-                {
-                    float dir = Quaternion.LookRotation(new Vector3(a.x, 0, a.y) - startPath[startPath.Count - 2]).eulerAngles.y;
-                    p = aStar.GetPath(a, b, dir);
-                }
-                else
-                {
-                    float dir = Quaternion.LookRotation(new Vector3(a.x, 0, a.y) - mscPath[mscPath.Count - 2]).eulerAngles.y;
-                    p = aStar.GetPath(a, b, dir);
-                }
+                float dir = Quaternion.LookRotation(new Vector3(b.x, 0, b.y) - new Vector3(a.x, 0, a.y)).eulerAngles.y;
+                p = aStar.GetPath(a, b, dir);
 
                 mscPath.AddRange(p);
             }

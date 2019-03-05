@@ -292,7 +292,7 @@ public class CreateMSC : MonoBehaviour
                 for (int j = 0; j < gridNoZ; ++j)
                 {
                     if (grid[i, j].isObstacle) continue;
-                    if (coverNodes.Count > 0 && !grid[i, j].isCovered)
+                    if (!grid[i, j].isCovered)
                     {
                         continue;
                     }

@@ -9,15 +9,15 @@ if __name__ == '__main__':
 
     all_cities = len(cost_matrix) - 1
     counted_cities = 0
-    save_solution = False
+    save_solution = True
 
     while counted_cities != all_cities:
         counted_cities = 0
 
-        population = Population(population_size=30, adj=cost_matrix, n_salesman=3)
+        population = Population(population_size=200, adj=cost_matrix, n_salesman=3)
         population.run_genetic_algorithm(number_of_iterations=2000,
-                                         mutation_probability=0.3,
-                                         crossover_probability=0.5)
+                                         mutation_probability=0.7,
+                                         crossover_probability=0.7)
         population.get_best_result()
 
         # # print(cost_matrix)
