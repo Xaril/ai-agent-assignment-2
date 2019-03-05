@@ -20,7 +20,7 @@ namespace UnityStandardAssets.Vehicles.Car
         public Dictionary<String, Vector3> initial_positions;
         public List<Vector3> mscPath;
         private int currentPathIndex = 0;
-        private float distanceOffset = 5f;
+        private float distanceOffset = 10f;
         private List<Vector3> finalPath;
 
         public GameObject MSC;
@@ -91,7 +91,6 @@ namespace UnityStandardAssets.Vehicles.Car
             Point startPoint = new Point((int)transform.position.x, (int)transform.position.z);
             Point endPoint = new Point((int)path[0].x, (int)path[0].z);
 
-
             PathGenerator aStar = new PathGenerator(terrain_manager, null);
             List<Vector3> startPath = aStar.GetPath(startPoint, endPoint, transform.rotation.eulerAngles.y);
             finalPath = startPath;
@@ -102,21 +101,12 @@ namespace UnityStandardAssets.Vehicles.Car
                 Point b = new Point((int)path[(i + 1) % path.Count].x, (int)path[(i + 1) % path.Count].z);
 
                 List<Vector3> p;
-                if (i == 0)
-                {
-                    float dir = Quaternion.LookRotation(new Vector3(a.x, 0, a.y) - startPath[startPath.Count - 2]).eulerAngles.y;
-                    p = aStar.GetPath(a, b, dir);
-                }
-                else
-                {
-                    float dir = Quaternion.LookRotation(new Vector3(a.x, 0, a.y) - mscPath[mscPath.Count - 2]).eulerAngles.y;
-                    p = aStar.GetPath(a, b, dir);
-                }
+                float dir = Quaternion.LookRotation(new Vector3(b.x, 0, b.y) - new Vector3(a.x, 0, a.y)).eulerAngles.y;
+                p = aStar.GetPath(a, b, dir);
 
                 mscPath.AddRange(p);
             }
             Debug.Log("Path computed");
-
         }
 
         private void FixedUpdate()
@@ -135,7 +125,7 @@ namespace UnityStandardAssets.Vehicles.Car
             if (!crashed)
             {
                 time += Time.deltaTime;
-                if (time >= crashCheckTime && Vector3.Distance(m_Car.transform.position, terrain_manager.myInfo.start_pos) > 5)
+                if (time >= crashCheckTime && Vector3.Distance(m_Car.transform.position, terrain_manager.myInfo.start_pos) > 0f)
                 {
                     time = 0;
                     if (Vector3.Distance(previousPosition, m_Car.transform.position) < 0.1f)
