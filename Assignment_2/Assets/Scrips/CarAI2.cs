@@ -91,7 +91,6 @@ namespace UnityStandardAssets.Vehicles.Car
             Point startPoint = new Point((int)transform.position.x, (int)transform.position.z);
             Point endPoint = new Point((int)path[0].x, (int)path[0].z);
 
-
             PathGenerator aStar = new PathGenerator(terrain_manager, null);
             List<Vector3> startPath = aStar.GetPath(startPoint, endPoint, transform.rotation.eulerAngles.y);
             finalPath = startPath;

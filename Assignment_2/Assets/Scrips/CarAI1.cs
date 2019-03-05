@@ -75,7 +75,6 @@ namespace UnityStandardAssets.Vehicles.Car
 
             InitCarColors();
 
-
             int carNumber = 0;
             for(int i = 0; i < friends.Length; ++i)
             {
@@ -88,6 +87,30 @@ namespace UnityStandardAssets.Vehicles.Car
 
             mstPath = mstCreator.GetComponent<CreateMST>().paths[carNumber];
             Point startPoint = new Point((int)transform.position.x, (int)transform.position.z);
+            //Vector3 current_pos = new Vector3(transform.position.x, 0f, transform.position.z);
+            //float min_dist = float.MaxValue;
+            //int beginning = 0;
+            //for (int i = 0; i < mstPath.Count; i++)
+            //{
+            //    float dist = Vector3.Distance(mstPath[i], current_pos);
+            //    if (dist < min_dist)
+            //    {
+            //        min_dist = dist;
+            //        beginning = i;
+            //    }
+            //}
+
+            //List<Vector3> new_mstPath = new List<Vector3>();
+            //for (int i = beginning; i < mstPath.Count; i++)
+            //{
+            //    new_mstPath.Add(mstPath[i]);
+            //}
+            //for (int i = 0; i < beginning; i++)
+            //{
+            //    new_mstPath.Add(mstPath[i]);
+            //}
+            //mstPath = new_mstPath;
+
             Point endPoint = new Point((int)mstPath[0].x, (int)mstPath[0].z);
             
             PathGenerator aStar = new PathGenerator(terrain_manager,null);
