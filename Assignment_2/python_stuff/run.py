@@ -7,14 +7,15 @@ if __name__ == '__main__':
     filename = './cost_matrix.txt'
     cost_matrix = read_cost_matrix(filename)
 
-    all_cities = len(cost_matrix) - 1
+    n_salesman = 3
+    all_cities = len(cost_matrix) - 1 - n_salesman
     counted_cities = 0
     save_solution = True
 
     while counted_cities != all_cities:
         counted_cities = 0
 
-        population = Population(population_size=200, adj=cost_matrix, n_salesman=3)
+        population = Population(population_size=50, adj=cost_matrix, n_salesman=n_salesman)
         population.run_genetic_algorithm(number_of_iterations=2000,
                                          mutation_probability=0.7,
                                          crossover_probability=0.7)
@@ -39,7 +40,7 @@ if __name__ == '__main__':
             print(i, ":  ", best_chromosome.solution[i][0], end="", sep="")
             tot_cost = 0
             counted_cities -= 1
-            for j in range(1, len(best_chromosome.solution[i])):
+            for j in range(1, len(best_chromosome.solution[i])-1):
                 print("-", best_chromosome.solution[i][j], end="", sep="")
                 tot_cost += cost_matrix[best_chromosome.solution[i][j - 1]][best_chromosome.solution[i][j]]
                 counted_cities += 1

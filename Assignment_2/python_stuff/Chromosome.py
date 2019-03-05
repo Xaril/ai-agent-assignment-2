@@ -29,7 +29,7 @@ class Chromosome:
         for i in range(self.m):
             salesman = self.solution[i]
             salesman_fitness = 0
-            for j in range(len(salesman) - 1):
+            for j in range(len(salesman) - 2):
                 salesman_fitness += self.adj[salesman[j]][salesman[j + 1]]
 
             self.cost += salesman_fitness
