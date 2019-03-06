@@ -127,18 +127,18 @@ namespace Assets.Scrips.Extras.Structures
                 {
                     if(isCloseToWall(p, i))
                     {
-                        costGrid[p.x, p.y] = 10 - i;
+                        costGrid[p.x, p.y] = 100 - i;
                         break;
                     }
                 }
                 
                 if (isCorner(p.x, p.y))
                 {
-                    costGrid[p.x, p.y] += 20;
-                    costGrid[p.x+1, p.y] += 20;
-                    costGrid[p.x-1, p.y] += 20;
-                    costGrid[p.x, p.y+1] += 20;
-                    costGrid[p.x, p.y-1] += 20;
+                    costGrid[p.x, p.y] += 200;
+                    costGrid[p.x+1, p.y] += 200;
+                    costGrid[p.x-1, p.y] += 200;
+                    costGrid[p.x, p.y+1] += 200;
+                    costGrid[p.x, p.y-1] += 200;
                 } 
             }
 
