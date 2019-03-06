@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System;
 
+
 namespace UnityStandardAssets.Vehicles.Car
 {
     [RequireComponent(typeof(CarController))]
@@ -17,11 +18,12 @@ namespace UnityStandardAssets.Vehicles.Car
         public GameObject[] enemies;
 
         public Dictionary<String, Vector3> initial_positions;
-        public List<Vector3> vrpPath;
-        public GameObject VRP;
+        public List<Vector3> mscPath;
         private int currentPathIndex = 0;
-        private readonly float distanceOffset = 5f;
+        private float distanceOffset = 10f;
         private List<Vector3> finalPath;
+
+        public GameObject MSC;
 
         public float maxVelocity;
         public float acceleration;
@@ -33,7 +35,6 @@ namespace UnityStandardAssets.Vehicles.Car
         private float accelerationDirection;
         private float brake;
         private float handBrake;
-        private int carNumber;
 
         private bool crashed;
         private float crashTime;
@@ -41,9 +42,6 @@ namespace UnityStandardAssets.Vehicles.Car
         private float crashDirection;
         private Vector3 previousPosition;
         private ConfigurationSpace configurationSpace;
-        
-
-        private static int[][] cost_matrix; // is symmetric
 
         private void Start()
         {
@@ -71,114 +69,95 @@ namespace UnityStandardAssets.Vehicles.Car
             InitializeCSpace();
 
 
-
             // note that both arrays will have holes when objects are destroyed
             // but for initial planning they should work
             friends = GameObject.FindGameObjectsWithTag("Player");
             enemies = GameObject.FindGameObjectsWithTag("Enemy");
-
-            Debug.Log(string.Format("Number of friends: {0}", friends.Length));
-
-            this.carNumber = 0;
+            MSC = GameObject.FindGameObjectWithTag("CreateMSC");
+            int carNumber = 0;
             for (int i = 0; i < friends.Length; ++i)
             {
                 if (friends[i].name == this.name)
                 {
-                    this.carNumber = i;
+                    carNumber = i;
                     break;
                 }
             }
 
+            Debug.Log("Start computing path");
 
-            List<Vector3> route = VRP.GetComponent<VRPPathsGenerator>().GetRouteForCar(carNumber);
+            List<Vector3>[] all_paths = MSC.GetComponent<CreateMSC>().GetPaths();
+            List<Vector3> my_path = all_paths[carNumber];
 
             Point startPoint = new Point((int)transform.position.x, (int)transform.position.z);
-            Point endPoint = new Point((int)route[0].x, (int)route[0].z);
-
+            Point endPoint = new Point((int)my_path[0].x, (int)my_path[0].z);
 
             PathGenerator aStar = new PathGenerator(terrain_manager, null);
+
             List<Vector3> startPath = aStar.GetPath(startPoint, endPoint, transform.rotation.eulerAngles.y);
-            
             finalPath = startPath;
-            for (int i = 0; i < route.Count; ++i)
+            mscPath = new List<Vector3>();
+
+            // Add your own path, without last node (origin)
+            for (int i = 0; i < my_path.Count - 2; ++i)
             {
-                Point a = new Point((int)route[i].x, (int)route[i].z);
-                Point b = new Point((int)route[(i + 1) % route.Count].x, (int)route[(i + 1) % route.Count].z);
+                Point a = new Point((int)my_path[i].x, (int)my_path[i].z);
+                Point b = new Point((int)my_path[(i + 1) % my_path.Count].x, (int)my_path[(i + 1) % my_path.Count].z);
 
                 List<Vector3> p;
-                if (i == 0)
+                float dir = Quaternion.LookRotation(new Vector3(b.x, 0, b.y) - new Vector3(a.x, 0, a.y)).eulerAngles.y;
+                p = aStar.GetPath(a, b, dir);
+
+                mscPath.AddRange(p);
+            }
+
+            // Add path of car with final node to yours, so that you can try to complete it
+            int choosen_car = -1;
+            float dist_closest_end = float.MaxValue;
+            Vector3 my_last_node = my_path[my_path.Count - 2];
+            for (int i = 0; i < friends.Length; i++)
+            {
+                if (i == carNumber)
                 {
-                    float dir = Quaternion.LookRotation(new Vector3(a.x, 0, a.y) - startPath[startPath.Count - 2]).eulerAngles.y;
-                    p = aStar.GetPath(a, b, dir);
+                    continue;
                 }
-                else
+                if (all_paths[i].Count < 2)
                 {
-                    float dir = Quaternion.LookRotation(new Vector3(a.x, 0, a.y) - vrpPath[vrpPath.Count - 2]).eulerAngles.y;
-                    p = aStar.GetPath(a, b, dir);
+                    continue;
                 }
-
-                vrpPath.AddRange(p);
-            }
-
-          
-        }
-
-        private void InitCostMatrix(List<Vector3> points)
-        {
-            if (cost_matrix != null)
-            {
-                return;
-            }
-            cost_matrix = new int[enemies.Length][];
-
-            for (int i = 0; i < enemies.Length; i++)
-            {
-                cost_matrix[i] = new int[enemies.Length];
-            }
-            
-            PathGenerator aStar = new PathGenerator(terrain_manager,null);
-
-            // Compute every cost
-            int count = 0;
-            System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
-            sw.Start();
-            for (int i = 0; i < enemies.Length; i++)
-            {
-                for (int j = 0; j < i; j++)
+                Vector3 other_car_last_node_path = all_paths[i][all_paths[i].Count - 2];
+                float dist = Vector3.Distance(my_last_node, other_car_last_node_path);
+                if (dist < dist_closest_end)
                 {
-
-                    if (i == j)
-                    {
-                        continue;
-                    }
-
-                    count++;
-                    Point start_point = new Point((int)points[i].x, (int)points[i].z);
-                    Point end_point = new Point((int)points[j].x, (int)points[j].z);
-                    Debug.Log(string.Format("i: {0}, j: {1}", i, j));
-                    Debug.Log(string.Format("({0},{1}) ({2}, {3})", start_point.x, start_point.y, end_point.x, end_point.y));
-                    Debug.Log(string.Format("n: {0}", count));
-                    
-                    List<Vector3> path = aStar.GetPath(start_point, end_point, 0f);
-
-                    cost_matrix[i][j] = cost_matrix[j][i] = path.Count;
-                    Debug.Log(string.Format("From {0} to {1}: {2}",
-                        points[i], points[j], cost_matrix[i][j]));
+                    dist_closest_end = dist;
+                    choosen_car = i;
                 }
             }
-            sw.Stop();
-            Debug.Log(string.Format("Time elapsed: {0}", sw.Elapsed));
+            Debug.Log(string.Format("I am {0}, best car: {1}, dist={2}", carNumber, choosen_car, dist_closest_end));
+            List<Vector3> other_car_path = all_paths[choosen_car];
+            for (int i = other_car_path.Count - 2; i > 0; i--)
+            {
+                Point a = new Point((int)other_car_path[i].x, (int)other_car_path[i].z);
+                Point b = new Point((int)other_car_path[(i - 1) % other_car_path.Count].x, (int)other_car_path[(i - 1) % other_car_path.Count].z);
 
+                List<Vector3> p;
+                float dir = Quaternion.LookRotation(new Vector3(b.x, 0, b.y) - new Vector3(a.x, 0, a.y)).eulerAngles.y;
+                p = aStar.GetPath(a, b, dir);
+
+                mscPath.AddRange(p);
+            }
+            Debug.Log("Path computed");
         }
 
         private void FixedUpdate()
         {
+
             if (Vector3.Distance(finalPath[currentPathIndex], transform.position) <= distanceOffset)
             {
                 currentPathIndex++;
                 if (currentPathIndex + 3 >= finalPath.Count)
                 {
-                    finalPath = vrpPath;
+                    finalPath = mscPath;
                     currentPathIndex = 0;
                 }
             }
@@ -186,7 +165,7 @@ namespace UnityStandardAssets.Vehicles.Car
             if (!crashed)
             {
                 time += Time.deltaTime;
-                if (time >= crashCheckTime && Vector3.Distance(m_Car.transform.position, terrain_manager.myInfo.start_pos) > 5)
+                if (time >= crashCheckTime && Vector3.Distance(m_Car.transform.position, terrain_manager.myInfo.start_pos) > 0f)
                 {
                     time = 0;
                     if (Vector3.Distance(previousPosition, m_Car.transform.position) < 0.1f)
@@ -288,11 +267,19 @@ namespace UnityStandardAssets.Vehicles.Car
             {
                 return;
             }
-            if (carNumber == 0) Gizmos.color = Color.red;
-            else if (carNumber == 1) Gizmos.color = Color.blue;
-            else Gizmos.color = Color.green;
-            for (int i = 0; i <= finalPath.Count; ++i)
+            Gizmos.color = Color.red;
+
+            foreach (Vector3 path in mscPath)
             {
+                Gizmos.DrawCube(path, Vector3.one);
+            }
+
+            for (int i = 0; i <= currentPathIndex; ++i)
+            {
+                if (finalPath[i] != null)
+                {
+                    continue;
+                }
                 Gizmos.DrawCube(finalPath[i], Vector3.one);
             }
         }

@@ -19,6 +19,8 @@ class Population:
         self.history_minmax = []
         self.history_score = []
 
+        self.best_absolute_chromosome = None
+        self.best_absolute_score = 10000000000
     # Genetic Algorithm
     def run_genetic_algorithm(self, number_of_iterations=1000, mutation_probability=0.7, crossover_probability=0.7):
 
@@ -82,6 +84,11 @@ class Population:
         for i in range(1, self.population_size):
             if self.population[i].score < best_chromosome.score:
                 best_chromosome = self.population[i]
+
+        if best_chromosome.score < self.best_absolute_score:
+            self.best_absolute_score = best_chromosome.score
+            self.best_absolute_chromosome = best_chromosome
+
         if verbose == 0:
             self.history_minmax.append(best_chromosome.minmax)
             self.history_tot_cost.append(best_chromosome.cost)

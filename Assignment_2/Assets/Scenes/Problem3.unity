@@ -5790,6 +5790,8 @@ MonoBehaviour:
   enemies: []
   vrpPath: []
   VRP: {fileID: 964885346}
+  MSC: {fileID: 0}
+  mscPath: []
   maxVelocity: 0
   acceleration: 0
 --- !u!114 &234107419
@@ -5890,7 +5892,7 @@ MonoBehaviour:
   m_MaxHandbrakeTorque: 100000000
   m_Downforce: 100
   m_SpeedType: 0
-  m_Topspeed: 150
+  m_Topspeed: 20
   m_RevRangeBoundary: 1
   m_SlipLimit: 0.3
   m_BrakeTorque: 20000
@@ -10980,6 +10982,62 @@ Transform:
   m_Father: {fileID: 2051714738}
   m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &306226012
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 306226013}
+  - component: {fileID: 306226014}
+  m_Layer: 0
+  m_Name: CreateMSC
+  m_TagString: CreateMSC
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &306226013
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 306226012}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 279.04236, y: -102.3125, z: 244.04735}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 10
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &306226014
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 306226012}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 262203c4919886a4eb48e31547f31b14, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Is_P2: 0
+  recompute: 0
+  python_interpreter: C:\\Users\\Lenovo\\AppData\\Local\\Programs\\Python\\Python37\\python.exe
+  python_folder: python_stuff
+  filename_problem: cost_matrix_P3.txt
+  filename_solution: solution_P3.txt
+  script_name: run.py
+  population_size: 10
+  number_of_iterations: 100
+  mutation_probability: 0.7
+  crossover_probability: 0.7
+  terrain_manager_game_object: {fileID: 1966902054}
+  cars: []
 --- !u!1 &310291743
 GameObject:
   m_ObjectHideFlags: 0
@@ -31481,6 +31539,7 @@ GameObject:
   - component: {fileID: 699121052}
   - component: {fileID: 699121051}
   - component: {fileID: 699121050}
+  - component: {fileID: 699121053}
   m_Layer: 0
   m_Name: Main Camera (3)
   m_TagString: MainCamera
@@ -31552,6 +31611,21 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 5
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &699121053
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 699121049}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 02125d181a5354fe6b661b4831900cfd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  target_object: {fileID: 1193846605}
+  behind: 6
+  above: 2
 --- !u!1 &718936142
 GameObject:
   m_ObjectHideFlags: 0
@@ -38079,7 +38153,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &964885347
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -38117,10 +38191,6 @@ MonoBehaviour:
   m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a13a59c4b0d1240538ef28aa00782895, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_Name: 
-  m_EditorClassIdentifier: 
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1 &971482829
@@ -53762,7 +53832,7 @@ MonoBehaviour:
   m_MaxHandbrakeTorque: 100000000
   m_Downforce: 100
   m_SpeedType: 0
-  m_Topspeed: 150
+  m_Topspeed: 20
   m_RevRangeBoundary: 1
   m_SlipLimit: 0.3
   m_BrakeTorque: 20000
@@ -53799,6 +53869,8 @@ MonoBehaviour:
   enemies: []
   vrpPath: []
   VRP: {fileID: 964885346}
+  MSC: {fileID: 0}
+  mscPath: []
   maxVelocity: 0
   acceleration: 0
 --- !u!114 &1193846609
@@ -53934,6 +54006,8 @@ MonoBehaviour:
   enemies: []
   vrpPath: []
   VRP: {fileID: 964885346}
+  MSC: {fileID: 0}
+  mscPath: []
   maxVelocity: 0
   acceleration: 0
 --- !u!114 &1196182085
@@ -54034,7 +54108,7 @@ MonoBehaviour:
   m_MaxHandbrakeTorque: 100000000
   m_Downforce: 100
   m_SpeedType: 0
-  m_Topspeed: 150
+  m_Topspeed: 20
   m_RevRangeBoundary: 1
   m_SlipLimit: 0.3
   m_BrakeTorque: 20000

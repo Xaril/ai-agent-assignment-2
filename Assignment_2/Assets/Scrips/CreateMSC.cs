@@ -7,6 +7,19 @@ using UnityEngine;
 
 public class CreateMSC : MonoBehaviour
 {
+    [SerializeField] public bool Is_P2;
+    [SerializeField] public bool recompute;
+    [SerializeField] public string python_interpreter;
+    // Francesco: C:\\Users\\Lenovo\\AppData\\Local\\Programs\\Python\\Python37\\python.exe
+    [SerializeField] public string python_folder;
+    [SerializeField] public string filename_problem;
+    [SerializeField] public string filename_solution;
+    [SerializeField] public string script_name;
+    [SerializeField] public int population_size;
+    [SerializeField] public int number_of_iterations;
+    [Range(0, 1)] [SerializeField] public float mutation_probability;
+    [Range(0, 1)] [SerializeField] public float crossover_probability;
+
     public GameObject terrain_manager_game_object;
     TerrainManager terrain_manager;
     private int gridNoX;
@@ -33,6 +46,7 @@ public class CreateMSC : MonoBehaviour
         grid = new CoverNode[gridNoX, gridNoZ];
         graph_indeces = new List<List<int>>();
         coverNodes = new List<CoverNode>();
+        cars = new List<GameObject>(GameObject.FindGameObjectsWithTag("Player"));
         this.numberOfGridCells = gridNoX * gridNoZ;
         this.numberOfObstacles = 0;
         for(int i = 0; i < gridNoX; ++i)
@@ -54,11 +68,40 @@ public class CreateMSC : MonoBehaviour
             }
         }
         InitCostMatrix();
-        createMSC();
+        if (Is_P2)
+        {
+            // P2
+            createMSC();
+        }
+        else
+        {      
+            // P3
+            getTurretsPositions();
+        }
         SaveProblemCostMatrixToFile();
-        //string python_result = SolveWithPython();
+
+        if (recompute)
+        {
+            string python_result = SolveWithPython();
+            Debug.Log(python_result);
+        }
         //Debug.LogError(string.Format("Python output: {0}", python_result));
+
         ReadSolutionFile();
+    }
+
+    private void getTurretsPositions()
+    {
+        var enemies = GameObject.FindGameObjectsWithTag("Enemy");
+        int i, j;
+        foreach (var enemy in enemies)
+        {
+            i = terrain_manager.myInfo.get_i_index(enemy.transform.position.x);
+            j = terrain_manager.myInfo.get_j_index(enemy.transform.position.z);
+
+            coverNodes.Add(grid[i, j]);
+        }
+
     }
 
     private void ReadSolutionFile()
@@ -66,7 +109,7 @@ public class CreateMSC : MonoBehaviour
         Debug.Log("Reading python solution");
         mTSP_solution = new List<List<CoverNode>>();
 
-        var lines = File.ReadAllLines("python_stuff/result_P2.txt");
+        var lines = File.ReadAllLines(python_folder + "\\" + filename_solution);
         foreach (var line in lines)
         {
             List<CoverNode> row_to_add = new List<CoverNode>();
@@ -81,15 +124,14 @@ public class CreateMSC : MonoBehaviour
 
     private string SolveWithPython()
     {
-        // full path of python interpreter 
-        string python = "C:\\Users\\Lenovo\\AppData\\Local\\Programs\\Python\\Python37\\python.exe";
+        Debug.Log("Calling the Python script to solve the problem");
 
         // python app to call 
-        string myPythonApp = "run.py";
+        string myPythonApp = script_name;
 
         // Create new process start info 
-        System.Diagnostics.ProcessStartInfo myProcessStartInfo = new System.Diagnostics.ProcessStartInfo(python);
-        myProcessStartInfo.WorkingDirectory = Directory.GetCurrentDirectory() + "\\python_stuff";
+        System.Diagnostics.ProcessStartInfo myProcessStartInfo = new System.Diagnostics.ProcessStartInfo(python_interpreter);
+        myProcessStartInfo.WorkingDirectory = Directory.GetCurrentDirectory() + "\\" + python_folder;
 
         // make sure we can read the output from stdout 
         myProcessStartInfo.UseShellExecute = false;
@@ -97,7 +139,14 @@ public class CreateMSC : MonoBehaviour
 
         // start python app with 2 argument
         int m = cars.Count;
-        myProcessStartInfo.Arguments = myPythonApp + " " + m;
+        myProcessStartInfo.Arguments = myPythonApp
+                                       + " --problem " + filename_problem
+                                       + " --solution " + filename_solution
+                                       + " -m " + m
+                                       + " --population " + population_size
+                                       + " --iterations " + number_of_iterations
+                                       + " --crossover " + crossover_probability
+                                       + " --mutation " + mutation_probability;
 
         System.Diagnostics.Process myProcess = new System.Diagnostics.Process();
         // assign start information to the process 
@@ -215,8 +264,17 @@ public class CreateMSC : MonoBehaviour
     private void SaveProblemCostMatrixToFile()
     {
         completeCoverNodes = new List<CoverNode>();
-        int s = terrain_manager.myInfo.get_i_index(cars[1].transform.position.x);
-        int t = terrain_manager.myInfo.get_j_index(cars[1].transform.position.z);
+        int car_for_starting_point;
+        if (Is_P2)
+        {
+            car_for_starting_point = 1;
+        }
+        else
+        {
+            car_for_starting_point = 2;
+        }
+        int s = terrain_manager.myInfo.get_i_index(cars[car_for_starting_point].transform.position.x);
+        int t = terrain_manager.myInfo.get_j_index(cars[car_for_starting_point].transform.position.z);
 
         cost_matrix_guarded = new List<List<int>>();
         completeCoverNodes.Add(grid[s, t]);
@@ -230,8 +288,8 @@ public class CreateMSC : MonoBehaviour
             }
             cost_matrix_guarded.Add(row_to_add);
         }
-
-        using (TextWriter tw = new StreamWriter("python_stuff/cost_matrix.txt"))
+        
+        using (TextWriter tw = new StreamWriter(python_folder + "\\" + filename_problem))
         {
             for (int j = 0; j < cost_matrix_guarded[0].Count; j++)
             {

@@ -54049,6 +54049,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 262203c4919886a4eb48e31547f31b14, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  Is_P2: 1
+  recompute: 0
+  python_interpreter: C:\\Users\\Lenovo\\AppData\\Local\\Programs\\Python\\Python37\\python.exe
+  python_folder: python_stuff
+  filename_problem: cost_matrix.txt
+  filename_solution: result_P2.txt
+  script_name: run.py
+  population_size: 10
+  number_of_iterations: 10
+  mutation_probability: 0.7
+  crossover_probability: 0.7
   terrain_manager_game_object: {fileID: 342108197}
   cars:
   - {fileID: 3165470286205641539}
