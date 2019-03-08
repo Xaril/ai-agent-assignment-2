@@ -5788,10 +5788,8 @@ MonoBehaviour:
   terrain_manager_game_object: {fileID: 1966902054}
   friends: []
   enemies: []
-  vrpPath: []
-  VRP: {fileID: 964885346}
-  MSC: {fileID: 0}
   mscPath: []
+  MSC: {fileID: 0}
   maxVelocity: 0
   acceleration: 0
 --- !u!114 &234107419
@@ -5813,7 +5811,7 @@ MonoBehaviour:
     time_array: []
     file_name: 
     json_string: 
-  RecordingOn: 1
+  RecordingOn: 0
   PlaybackOn: 0
   position_list: []
   rotation_list: []
@@ -53867,10 +53865,8 @@ MonoBehaviour:
   terrain_manager_game_object: {fileID: 1966902054}
   friends: []
   enemies: []
-  vrpPath: []
-  VRP: {fileID: 964885346}
-  MSC: {fileID: 0}
   mscPath: []
+  MSC: {fileID: 0}
   maxVelocity: 0
   acceleration: 0
 --- !u!114 &1193846609
@@ -53892,7 +53888,7 @@ MonoBehaviour:
     time_array: []
     file_name: 
     json_string: 
-  RecordingOn: 1
+  RecordingOn: 0
   PlaybackOn: 0
   position_list: []
   rotation_list: []
@@ -54004,10 +54000,8 @@ MonoBehaviour:
   terrain_manager_game_object: {fileID: 1966902054}
   friends: []
   enemies: []
-  vrpPath: []
-  VRP: {fileID: 964885346}
-  MSC: {fileID: 0}
   mscPath: []
+  MSC: {fileID: 0}
   maxVelocity: 0
   acceleration: 0
 --- !u!114 &1196182085
@@ -54029,7 +54023,7 @@ MonoBehaviour:
     time_array: []
     file_name: 
     json_string: 
-  RecordingOn: 1
+  RecordingOn: 0
   PlaybackOn: 0
   position_list: []
   rotation_list: []

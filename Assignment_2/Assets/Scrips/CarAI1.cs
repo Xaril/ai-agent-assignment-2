@@ -161,7 +161,7 @@ namespace UnityStandardAssets.Vehicles.Car
             if (!crashed)
             {
                 time += Time.deltaTime;
-                if (time >= crashCheckTime && Vector3.Distance(m_Car.transform.position, terrain_manager.myInfo.start_pos) > 5)
+                if (time >= crashCheckTime && Vector3.Distance(m_Car.transform.position, terrain_manager.myInfo.start_pos) > 0)
                 {
                     time = 0;
                     if (Vector3.Distance(previousPosition, m_Car.transform.position) < 0.1f)
