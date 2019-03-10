@@ -17584,6 +17584,8 @@ MonoBehaviour:
   pathFinder: {fileID: 1688991406}
   maxVelocity: 0
   acceleration: 0
+  currentPathIndex: 0
+  inFormation: 0
   leader: 1
 --- !u!114 &468917176
 MonoBehaviour:
@@ -17950,6 +17952,8 @@ MonoBehaviour:
   pathFinder: {fileID: 1688991406}
   maxVelocity: 0
   acceleration: 0
+  currentPathIndex: 0
+  inFormation: 0
   leader: 0
 --- !u!114 &492361547
 MonoBehaviour:
@@ -18077,7 +18081,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 492361544}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 414, y: 0.0009150505, z: 85}
+  m_LocalPosition: {x: 418.6, y: 0.0009150505, z: 80}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 1500800063}
@@ -29443,6 +29447,8 @@ MonoBehaviour:
   pathFinder: {fileID: 1688991406}
   maxVelocity: 0
   acceleration: 0
+  currentPathIndex: 0
+  inFormation: 0
   leader: 0
 --- !u!114 &792701571
 MonoBehaviour:
@@ -29570,7 +29576,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 792701568}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 419, y: 0.0009150505, z: 85}
+  m_LocalPosition: {x: 428.3, y: 0.0009150505, z: 74.1}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 2002911785}
