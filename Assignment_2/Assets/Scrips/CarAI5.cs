@@ -18,7 +18,7 @@ namespace UnityStandardAssets.Vehicles.Car
         public GameObject[] enemies;
         public GameObject pathFinder;
 
-        enum Formation { Drive, Attack }
+        enum Formation { Drive, Attack, Back }
 
         public float maxVelocity;
         public float acceleration;
@@ -44,9 +44,11 @@ namespace UnityStandardAssets.Vehicles.Car
         private readonly float EPSILON = 0.01f;
         private Formation formation = Formation.Drive;
         public bool inFormation = false;
+        int backingTimeSteps = 0;
+        int maxBackingTimeSteps = 100;
 
         public bool leader;
-        int carNumber;
+        public int carNumber;
         Vector3 offset = Vector3.zero;
         float angle;
 
@@ -111,119 +113,123 @@ namespace UnityStandardAssets.Vehicles.Car
 
         }
 
-
         private void FixedUpdate()
         {
-            if (finalPathIndex > 0)
+            if (leader)
             {
-                Stop();
-                return;
-            }
-            Vector3 followPoint;
-            if(leader)
-            {
-                if (currentPathIndex > finalPath.Count - 8 && !inFormation && formation == Formation.Drive)
+                bool allInformation = true;
+                foreach (GameObject friend in friends)
                 {
-                    Stop();
-                    inFormation = true;
-                    foreach (GameObject friend in friends)
+                    if (!friend.GetComponent<CarAI5>().inFormation)
                     {
-                        if(!friend.GetComponent<CarAI5>().leader)
-                        {
-                            friend.GetComponent<CarAI5>().inFormation = false;
-                        }
+                        allInformation = false;
+                        break;
                     }
-
-                    return;
                 }
-                if(inFormation)
+
+                if (allInformation)
                 {
                     foreach (GameObject friend in friends)
                     {
-                        CarAI5 carAI = friend.GetComponent<CarAI5>();
-                        if (!carAI.leader && !carAI.inFormation)
-                        {
-                            Stop();
-                            return;
-                        }
+                        friend.GetComponent<CarAI5>().formation = Formation.Attack;
+
                     }
-                    formation = Formation.Attack;
                     inFormation = false;
-                    /*
-                    foreach (GameObject friend in friends)
-                    {
-                        CarAI5 carAI = friend.GetComponent<CarAI5>();
-                        carAI.formation = Formation.Attack;
-                        carAI.inFormation = false;
-                        carAI.Attack();
-                    }
-                    return;
-                    */                   
                 }
                 if (Vector3.Distance(m_Car.transform.position, finalPath[currentPathIndex]) < 2f &&
                     currentPathIndex < finalPath.Count - 1)
                 {
                     currentPathIndex++;
                 }
-                if(currentPathIndex >= finalPath.Count - 1)
+                if (currentPathIndex >= finalPath.Count - 1)
                 {
-                    if(enemies.Length != GameObject.FindGameObjectsWithTag("Enemy").Length)
+                    finalPathIndex++;
+                    finalPath = pathFinder.GetComponent<CreateGridCost>().path[finalPathIndex];
+                    currentPathIndex = 0;
+                    /*
+                    bool leaderSet = false;
+                    foreach (GameObject friend in friends)
                     {
-
-                        enemies = GameObject.FindGameObjectsWithTag("Enemy");
-                        finalPathIndex++;
-                        foreach(GameObject friend in friends)
+                        CarAI5 friendAI = friend.GetComponent<CarAI5>();
+                        if (friendAI.carNumber != carNumber && !leaderSet)
                         {
-                            CarAI5 friendAI = friend.GetComponent<CarAI5>();
-                            if(friendAI.carNumber != carNumber)
-                            {
-                                friendAI.leader = true;
-                                leader = false;
-                                friendAI.finalPathIndex = finalPathIndex;
-                                friendAI.finalPath = pathFinder.GetComponent<CreateGridCost>().path[finalPathIndex];
-                                friendAI.currentPathIndex = 0;
-                                friendAI.enemies = enemies;
-                                break;
-                            }
+                            friendAI.leader = true;
+                            leader = false;
+                            friendAI.finalPathIndex = finalPathIndex;
+                            friendAI.finalPath = pathFinder.GetComponent<CreateGridCost>().path[finalPathIndex];
+                            friendAI.currentPathIndex = 0;
+                            leaderSet = true;
                         }
-                    }
+                        friendAI.formation = Formation.Back;
+                        friendAI.inFormation = false;
+                        
+                    } */
                 }
 
-                followPoint = finalPath[currentPathIndex];
+
+                if (currentPathIndex > finalPath.Count - 8 && !inFormation && formation == Formation.Drive)
+                {
+                    Stop();
+                    inFormation = true;
+
+                }
+
             }
-            else
-            {
-                foreach (GameObject friend in friends)
-                {
-                    if (friend.GetComponent<CarAI5>().leader)
-                    {
-                        if (!friend.GetComponent<CarAI5>().inFormation) return;
-                    }
-                }
 
-                followPoint = FindFollowPoint();
-                if (carNumber == 2)
+
+            Vector3 followPoint = FindFollowPoint();
+
+            if (formation == Formation.Back && !leader)
+            {
+                if (backingTimeSteps < maxBackingTimeSteps)
                 {
-                    Debug.Log(inFormation);
+                    m_Car.Move(0f, -1f, -1f, 0f);
+                    backingTimeSteps++;
+                } else if(Math.Abs(m_Car.GetComponent<Rigidbody>().velocity.magnitude) > EPSILON)
+                {
+                    Stop();
+                } else
+                {
+                    backingTimeSteps = 0;
+
+                    foreach (GameObject friend in friends)
+                    {
+                        CarAI5 friendAI = friend.GetComponent<CarAI5>();
+                        friendAI.formation = Formation.Drive;
+                        friendAI.inFormation = false;
+
+                    }
+                    return;
+                    
+                    
                 }
-                if(Vector3.Distance(m_Car.transform.position, followPoint) < 1.5f)
+               
+                return;
+            }
+
+            if (followPoint == null)
+            {
+                return;
+            } else if(followPoint == Vector3.zero)
+            {
+                if(formation == Formation.Drive) Stop();
+                return;
+            }
+
+
+            if(!leader)
+            {
+                if (Vector3.Distance(m_Car.transform.position, followPoint) < 1.5f)
                 {
-                    Debug.Log("Stopping");
                     Stop();
                     if (Math.Abs(m_Car.GetComponent<Rigidbody>().velocity.magnitude) < EPSILON) inFormation = true;
                     return;
                 }
-                if(inFormation)
-                {
-                    Stop();
-                    return;
-                }
-
             }
 
             if (!crashed)
             {
-                if(!leader || currentPathIndex < finalPath.Count - 1) 
+                if (!leader || currentPathIndex < finalPath.Count - 1)
                 {
                     time += Time.deltaTime;
                     if (time >= crashCheckTime && Vector3.Distance(m_Car.transform.position, terrain_manager.myInfo.start_pos) > 5)
@@ -255,13 +261,6 @@ namespace UnityStandardAssets.Vehicles.Car
                     }
                 }
 
-
-                if (formation == Formation.Attack && Vector3.Distance(m_Car.transform.position, followPoint) < 2f)
-                {
-                    Stop();
-                    return;
-                }
-                
                 steerDirection = SteerInput(m_Car.transform.position, m_Car.transform.eulerAngles.y, followPoint);
                 accelerationDirection = AccelerationInput(m_Car.transform.position, m_Car.transform.eulerAngles.y, followPoint);
 
@@ -272,9 +271,9 @@ namespace UnityStandardAssets.Vehicles.Car
 
                 if (accelerationDirection < 0)
                 {
-                    if(formation == Formation.Attack)
+                    if (formation == Formation.Attack)
                     {
-                        foreach(GameObject friend in friends)
+                        foreach (GameObject friend in friends)
                         {
                             CarAI5 carAI = friend.GetComponent<CarAI5>();
                             carAI.m_Car.Move(leader ? -steerDirection : steerDirection, brake, accelerationDirection * acceleration, handBrake);
@@ -322,7 +321,7 @@ namespace UnityStandardAssets.Vehicles.Car
                         {
                             m_Car.Move(steerDirection, acceleration, 0, 0);
                         }
-                       
+
                     }
                     else
                     {
@@ -338,7 +337,7 @@ namespace UnityStandardAssets.Vehicles.Car
                         {
                             m_Car.Move(-steerDirection, 0, -acceleration, 0);
                         }
-                       
+
                     }
                 }
                 else
@@ -352,73 +351,49 @@ namespace UnityStandardAssets.Vehicles.Car
         private Vector3 FindFollowPoint()
         {
 
+
+            if (leader)
+            {
+                if(inFormation || formation == Formation.Back)
+                {
+                    return Vector3.zero;
+                }
+                return finalPath[currentPathIndex];
+            }
+
             Transform leaderCar = transform;
             int leaderCarPathIndex = 0;
             int leaderCarNumber = 0;
             CarAI5 leaderAI = friends[0].GetComponent<CarAI5>();
-            foreach(GameObject friend in friends)
+            foreach (GameObject friend in friends)
             {
-                if(friend.GetComponent<CarAI5>().leader)
+                if (friend.GetComponent<CarAI5>().leader)
                 {
                     leaderCar = friend.transform;
                     leaderAI = friend.GetComponent<CarAI5>();
-                    leaderCarPathIndex = friend.GetComponent<CarAI5>().currentPathIndex; 
+                    leaderCarPathIndex = friend.GetComponent<CarAI5>().currentPathIndex;
                     leaderCarNumber = friend.GetComponent<CarAI5>().carNumber;
                     break;
                 }
             }
 
-            /*
-            if (!leaderAI.inFormation)
+            if(!leaderAI.inFormation)
             {
-                foreach (GameObject friend in friends)
-                {
-                    if (friend.GetComponent<CarAI5>().leader)
-                    {
-                        int offsetMultiplier = 1;
-                        if (carNumber == (friend.GetComponent<CarAI5>().carNumber + 2) % 3)
-                        {
-                            offsetMultiplier = 2;
-                        }
-                        int index = friend.GetComponent<CarAI5>().currentPathIndex - offsetMultiplier * 8;
-                        return index >= 0 ? finalPath[index] : Vector3.zero;
-                    }
-                }
-            }  */
-
-
-
-            float invLerpSpeed = 1f;
-            float spacing = 8f;
-
-            while(CheckSpacing(leaderCar, spacing))
-            {
-                spacing--;
+                return Vector3.zero;
             }
-
+            
             int dir = -1;
             if(carNumber == (leaderCarNumber + 2) % 3)
             {
                 dir = 1;
             }
 
-            //offset = Vector3.Lerp(offset, Quaternion.AngleAxis(dir * angle, leaderCar.transform.rotation.eulerAngles) * -Vector3.forward * spacing, Time.deltaTime / invLerpSpeed);
+            
 
             offset = Quaternion.AngleAxis(60 * dir, leaderCar.transform.up) * -leaderCar.transform.forward * 4;
 
-            /*
-            bool collision = false;
-            while (terrain_manager.myInfo.traversability[terrain_manager.myInfo.get_i_index((leaderCar.position + offset).x), terrain_manager.myInfo.get_j_index((leaderCar.position + offset).z)] > 0.5f)
-            {
-                offset *= 0.9f;
-                collision = true;
-            }
-            if(collision)
-            {
-                offset *= 0.5f;
-            } */
-
-            return finalPath[leaderCarPathIndex] + offset;
+            Debug.Log(carNumber + "   Offset" + offset);
+            return leaderCar.position + offset;
         }
 
         private bool CheckSpacing(Transform leaderCar, float spacing)
@@ -474,6 +449,10 @@ namespace UnityStandardAssets.Vehicles.Car
                     break;
                 }
             }
+            Gizmos.color = Color.black;
+            Gizmos.DrawSphere(leaderCar.position, 1);
+
+
             Gizmos.color = Color.blue;
             Gizmos.DrawSphere(leaderCar.position + offset, 1);
         }
