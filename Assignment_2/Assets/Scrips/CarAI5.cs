@@ -14,6 +14,8 @@ namespace UnityStandardAssets.Vehicles.Car
         public GameObject terrain_manager_game_object;
         TerrainManager terrain_manager;
 
+        public enum Formation {Drive, Attack}
+
         public GameObject[] friends;
         public GameObject[] enemies;
         public GameObject pathFinder;
@@ -29,6 +31,7 @@ namespace UnityStandardAssets.Vehicles.Car
         private float brake;
         private float handBrake;
 
+        private readonly float EPSILON = 0.01f;
         private bool crashed;
         private float crashTime;
         private float crashCheckTime;
@@ -39,8 +42,11 @@ namespace UnityStandardAssets.Vehicles.Car
         private readonly int distanceOffset = 3;
         private List<Vector3> finalPath;
         private int finalPathIndex;
+        public Formation formation;
 
         public bool leader;
+        public bool inFormation = false;
+        public bool reachedTurret = false;
         int carNumber;
         Vector3 offset = Vector3.zero;
         float angle;
@@ -62,7 +68,7 @@ namespace UnityStandardAssets.Vehicles.Car
             handBrake = 0;
             crashed = false;
             crashTime = 0;
-            crashCheckTime = 0.5f;
+            crashCheckTime = 0.25f;
             crashDirection = 0;
             previousPosition = Vector3.up;
             // get the car controller
@@ -85,56 +91,119 @@ namespace UnityStandardAssets.Vehicles.Car
                     break;
                 }
             }
-            angle = 30;
+            angle = 90;
 
             finalPathIndex = 0;
             finalPath = pathFinder.GetComponent<CreateGridCost>().path[finalPathIndex];
+            currentPathIndex = 15;
 
             Debug.Log(finalPath.Count);
         }
 
+        private void Stop()
+        {
+            crashed = false;
+            crashTime = 0;
+            if (Math.Abs(m_Car.GetComponent<Rigidbody>().velocity.magnitude) > EPSILON)
+            {
+                m_Car.Move(0f, 0f, 0f, 1);
+            }
+        }
+
+
+
 
         private void FixedUpdate()
         {
-            Vector3 followPoint;
-            if(leader)
+
+            bool allInFormation = true;
+            foreach (GameObject car in friends)
             {
-                if(Vector3.Distance(m_Car.transform.position, finalPath[currentPathIndex]) < 2f &&
+                if (!car.GetComponent<CarAI5>().inFormation)
+                {
+                    allInFormation = false;
+                }
+            }
+
+            Vector3 followPoint;
+            if (leader)
+            {
+
+                if (currentPathIndex >= finalPath.Count - 5)
+                {
+                    if (!reachedTurret)
+                    {
+                        foreach (GameObject car in friends)
+                        {
+                            car.GetComponent<CarAI5>().inFormation = false;
+                        }
+                        reachedTurret = true;
+                    }
+
+                    inFormation = true;
+
+                }
+
+                if (inFormation && !allInFormation)
+                {
+                    Stop();
+                    return;
+                }
+
+                if (Vector3.Distance(m_Car.transform.position, finalPath[currentPathIndex]) < 2f &&
                     currentPathIndex < finalPath.Count - 1)
                 {
                     currentPathIndex++;
+
                 }
-                if(currentPathIndex >= finalPath.Count - 1)
+                if (currentPathIndex >= finalPath.Count - 1)
                 {
-                    if(enemies.Length != GameObject.FindGameObjectsWithTag("Enemy").Length)
+                    finalPathIndex++;
+                    finalPath = pathFinder.GetComponent<CreateGridCost>().path[finalPathIndex];
+                    currentPathIndex = 0;
+                    reachedTurret = false;
+
+                    foreach(GameObject car in friends)
                     {
-                        enemies = GameObject.FindGameObjectsWithTag("Enemy");
-                        finalPathIndex++;
-                        foreach(GameObject friend in friends)
-                        {
-                            CarAI5 friendAI = friend.GetComponent<CarAI5>();
-                            if(friendAI.carNumber == (carNumber + 2) % 3)
-                            {
-                                friendAI.leader = true;
-                                leader = false;
-                                friendAI.finalPathIndex = finalPathIndex;
-                                friendAI.finalPath = pathFinder.GetComponent<CreateGridCost>().path[finalPathIndex];
-                                friendAI.currentPathIndex = 0;
-                                friendAI.enemies = enemies;
-                                break;
-                            }
-                        }
+                        car.GetComponent<CarAI5>().inFormation = false;
                     }
                 }
                 followPoint = finalPath[currentPathIndex];
             }
             else
             {
+                bool leaderInFormation = false;
+
+                foreach (GameObject car in friends)
+                {
+                    if (car.GetComponent<CarAI5>().leader && car.GetComponent<CarAI5>().inFormation)
+                    {
+                        leaderInFormation = true;
+                        break;
+                    }
+                }
+
+                if (!leaderInFormation)
+                {
+                    return;
+                }
+
                 followPoint = FindFollowPoint();
+
+                if (Vector3.Distance(transform.position, followPoint) < 2f)
+                {
+                    inFormation = true;
+                }
+
+                if (inFormation && !allInFormation)
+                {
+                    Stop();
+                    return;
+                }
             }
 
-            if (!crashed)
-            {
+                if (!crashed)
+                {
                 if(!leader || currentPathIndex < finalPath.Count - 1) 
                 {
                     time += Time.deltaTime;
@@ -176,7 +245,7 @@ namespace UnityStandardAssets.Vehicles.Car
 
                 if (accelerationDirection < 0)
                 {
-                    m_Car.Move(leader ? -steerDirection : steerDirection, brake, accelerationDirection * acceleration, handBrake);
+                    m_Car.Move(-steerDirection, brake, accelerationDirection * acceleration, handBrake);
                 }
                 else
                 {
@@ -186,7 +255,7 @@ namespace UnityStandardAssets.Vehicles.Car
             else
             {
                 crashTime += Time.deltaTime;
-                if (crashTime <= 1f)
+                if (crashTime <= crashCheckTime)
                 {
                     steerDirection = SteerInput(m_Car.transform.position, m_Car.transform.eulerAngles.y, followPoint);
                     if (crashDirection > 0)
@@ -207,8 +276,8 @@ namespace UnityStandardAssets.Vehicles.Car
         }
 
         private Vector3 FindFollowPoint()
-        {
-            Transform leaderCar = transform;
+        { 
+        Transform leaderCar = transform;
             int leaderCarNumber = 0;
             foreach(GameObject friend in friends)
             {
@@ -221,12 +290,7 @@ namespace UnityStandardAssets.Vehicles.Car
             }
 
             float invLerpSpeed = 1f;
-            float spacing = 8f;
 
-            while(CheckSpacing(leaderCar, spacing))
-            {
-                spacing--;
-            }
 
             int dir = -1;
             if(carNumber == (leaderCarNumber + 2) % 3)
@@ -234,18 +298,9 @@ namespace UnityStandardAssets.Vehicles.Car
                 dir = 1;
             }
 
-            offset = Vector3.Lerp(offset, Quaternion.AngleAxis(dir * angle, leaderCar.up) * -Vector3.forward * spacing, Time.deltaTime / invLerpSpeed);
 
-            bool collision = false;
-            while (terrain_manager.myInfo.traversability[terrain_manager.myInfo.get_i_index((leaderCar.position + offset).x), terrain_manager.myInfo.get_j_index((leaderCar.position + offset).z)] > 0.5f)
-            {
-                offset *= 0.9f;
-                collision = true;
-            }
-            if(collision)
-            {
-                offset *= 0.5f;
-            }
+
+            offset = Vector3.Lerp(offset, Quaternion.AngleAxis(angle * dir, leaderCar.up) * -leaderCar.forward * 5f, Time.deltaTime / invLerpSpeed);
 
             return leaderCar.position + offset;
         }

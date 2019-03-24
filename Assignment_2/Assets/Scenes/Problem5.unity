@@ -17584,7 +17584,8 @@ MonoBehaviour:
   pathFinder: {fileID: 1688991406}
   maxVelocity: 0
   acceleration: 0
-  leader: 1
+  formation: 0
+  leader: 0
 --- !u!114 &468917176
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -17950,7 +17951,8 @@ MonoBehaviour:
   pathFinder: {fileID: 1688991406}
   maxVelocity: 0
   acceleration: 0
-  leader: 0
+  formation: 0
+  leader: 1
 --- !u!114 &492361547
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -29443,6 +29445,7 @@ MonoBehaviour:
   pathFinder: {fileID: 1688991406}
   maxVelocity: 0
   acceleration: 0
+  formation: 0
   leader: 0
 --- !u!114 &792701571
 MonoBehaviour:
