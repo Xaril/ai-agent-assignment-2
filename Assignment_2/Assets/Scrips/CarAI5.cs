@@ -39,17 +39,19 @@ namespace UnityStandardAssets.Vehicles.Car
         private readonly int distanceOffset = 3;
         private List<Vector3> finalPath;
         private int finalPathIndex;
+        Vector3 previousPoint;
+        Vector3 followPoint;
 
         public bool leader;
         int carNumber;
         Vector3 offset = Vector3.zero;
-        float angle;
+        public float angle;
 
         private void Start()
         {
 
             Time.timeScale = 1;
-            maxVelocity = 10f;
+            maxVelocity = leader ? 10f : 20f;
             acceleration = 1f;
 
             timeStep = 0.05f;
@@ -85,48 +87,56 @@ namespace UnityStandardAssets.Vehicles.Car
                     break;
                 }
             }
-            angle = 30;
+            angle = 120;
 
             finalPathIndex = 0;
             finalPath = pathFinder.GetComponent<CreateGridCost>().path[finalPathIndex];
 
-            Debug.Log(finalPath.Count);
         }
 
 
         private void FixedUpdate()
         {
-            Vector3 followPoint;
-            if(leader)
+
+            bool leaderAlive = false;
+
+            foreach (GameObject car in friends)
             {
-                if(Vector3.Distance(m_Car.transform.position, finalPath[currentPathIndex]) < 2f &&
-                    currentPathIndex < finalPath.Count - 1)
+                if (car == null) continue;
+                if (car.GetComponent<CarAI5>().leader)
                 {
-                    currentPathIndex++;
+                    leaderAlive = true;
                 }
-                if(currentPathIndex >= finalPath.Count - 1)
+            }
+
+            foreach (GameObject car in friends)
+            {
+                if (!leaderAlive) {
+                    leader = true;
+                    break;
+                }
+            }
+
+            previousPoint = followPoint;
+            followPoint = FindFollowPoint();
+            float pointVelocity = Vector3.Distance(previousPoint, followPoint) / Time.deltaTime;
+
+            if (leader)
+            {
+                followPoint = FindLeaderFollowPoint();
+
+                if (Vector3.Distance(transform.position, followPoint) < 2f)
                 {
-                    if(enemies.Length != GameObject.FindGameObjectsWithTag("Enemy").Length)
+                    foreach (GameObject car in friends)
                     {
-                        enemies = GameObject.FindGameObjectsWithTag("Enemy");
-                        finalPathIndex++;
-                        foreach(GameObject friend in friends)
-                        {
-                            CarAI5 friendAI = friend.GetComponent<CarAI5>();
-                            if(friendAI.carNumber == (carNumber + 2) % 3)
-                            {
-                                friendAI.leader = true;
-                                leader = false;
-                                friendAI.finalPathIndex = finalPathIndex;
-                                friendAI.finalPath = pathFinder.GetComponent<CreateGridCost>().path[finalPathIndex];
-                                friendAI.currentPathIndex = 0;
-                                friendAI.enemies = enemies;
-                                break;
-                            }
-                        }
+                        if (car == null) continue;
+                        car.GetComponent<CarAI5>().finalPathIndex++;
+                        car.GetComponent<CarAI5>().finalPath = pathFinder.GetComponent<CreateGridCost>().path[finalPathIndex];
                     }
+                    followPoint = FindLeaderFollowPoint();
                 }
-                followPoint = finalPath[currentPathIndex];
+
+
             }
             else
             {
@@ -169,6 +179,10 @@ namespace UnityStandardAssets.Vehicles.Car
                 steerDirection = SteerInput(m_Car.transform.position, m_Car.transform.eulerAngles.y, followPoint);
                 accelerationDirection = AccelerationInput(m_Car.transform.position, m_Car.transform.eulerAngles.y, followPoint);
 
+                if (m_Car.CurrentSpeed >= pointVelocity + Vector3.Distance(followPoint, m_Car.transform.position))
+                {
+                    accelerationDirection = 0;
+                }
                 if (m_Car.CurrentSpeed >= maxVelocity)
                 {
                     accelerationDirection = 0;
@@ -176,7 +190,7 @@ namespace UnityStandardAssets.Vehicles.Car
 
                 if (accelerationDirection < 0)
                 {
-                    m_Car.Move(leader ? -steerDirection : steerDirection, brake, accelerationDirection * acceleration, handBrake);
+                    m_Car.Move(-steerDirection, brake, accelerationDirection * acceleration, handBrake);
                 }
                 else
                 {
@@ -206,6 +220,30 @@ namespace UnityStandardAssets.Vehicles.Car
             }
         }
 
+        private bool IsPathFree(Vector3 position, Vector3 target)
+        {
+            Vector3 direction = target - position;
+            float distance = Vector3.Distance(position, target);
+            RaycastHit hit;
+            bool isHit = Physics.Raycast(position + new Vector3(0f,2f,0f), direction, out hit, distance);
+            return !isHit;
+        }
+
+
+        private Vector3 FindLeaderFollowPoint()
+        {
+
+            for(int i = finalPath.Count - 1; i >= 0; i--)
+            {
+                if(IsPathFree(transform.position, finalPath[i]))
+                {
+                    return finalPath[i];
+                }
+            }
+
+            return finalPath[finalPath.Count - 1];
+        }
+
         private Vector3 FindFollowPoint()
         {
             Transform leaderCar = transform;
@@ -221,41 +259,17 @@ namespace UnityStandardAssets.Vehicles.Car
             }
 
             float invLerpSpeed = 1f;
-            float spacing = 8f;
 
-            while(CheckSpacing(leaderCar, spacing))
-            {
-                spacing--;
-            }
-
-            int dir = -1;
+            int dir = 1;
             if(carNumber == (leaderCarNumber + 2) % 3)
             {
-                dir = 1;
+                dir = -1;
             }
 
-            offset = Vector3.Lerp(offset, Quaternion.AngleAxis(dir * angle, leaderCar.up) * -Vector3.forward * spacing, Time.deltaTime / invLerpSpeed);
+            offset = Vector3.Lerp(offset, Quaternion.AngleAxis(dir * angle, leaderCar.up) * -leaderCar.forward * 4.5f, Time.deltaTime / invLerpSpeed);
 
-            bool collision = false;
-            while (terrain_manager.myInfo.traversability[terrain_manager.myInfo.get_i_index((leaderCar.position + offset).x), terrain_manager.myInfo.get_j_index((leaderCar.position + offset).z)] > 0.5f)
-            {
-                offset *= 0.9f;
-                collision = true;
-            }
-            if(collision)
-            {
-                offset *= 0.5f;
-            }
 
             return leaderCar.position + offset;
-        }
-
-        private bool CheckSpacing(Transform leaderCar, float spacing)
-        {
-            Vector3 pos = leaderCar.position + Quaternion.AngleAxis(-angle, leaderCar.up) * -Vector3.forward * spacing;
-            Vector3 pos2 = leaderCar.position + Quaternion.AngleAxis(angle, leaderCar.up) * -Vector3.forward * spacing;
-            return terrain_manager.myInfo.traversability[terrain_manager.myInfo.get_i_index(pos.x), terrain_manager.myInfo.get_j_index(pos.z)] > 0.5f
-                    || terrain_manager.myInfo.traversability[terrain_manager.myInfo.get_i_index(pos2.x), terrain_manager.myInfo.get_j_index(pos2.z)] > 0.5f;
         }
 
         //Determines steer angle for the car
@@ -289,8 +303,15 @@ namespace UnityStandardAssets.Vehicles.Car
 
         private void OnDrawGizmos()
         {
-            if(!Application.isPlaying || leader)
+            if(!Application.isPlaying)
             {
+                return;
+            }
+
+            if (leader)
+            {
+                Gizmos.color = Color.red;
+                Gizmos.DrawCube(followPoint, Vector3.one * 3);
                 return;
             }
 
