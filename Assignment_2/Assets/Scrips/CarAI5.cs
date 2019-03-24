@@ -40,6 +40,7 @@ namespace UnityStandardAssets.Vehicles.Car
         public int currentPathIndex = 0;
         private readonly int distanceOffset = 3;
         private List<Vector3> finalPath;
+        private List<List<Vector3>> completePath;
         private int finalPathIndex;
         private readonly float EPSILON = 0.01f;
         public  Formation formation = Formation.Drive;
@@ -109,16 +110,15 @@ namespace UnityStandardAssets.Vehicles.Car
             Debug.Log("stopping");
             if (Math.Abs(m_Car.GetComponent<Rigidbody>().velocity.magnitude) > EPSILON)
             {
-                m_Car.Move(0f, 0f, 0f, 1);
+                //GenerateOffset(-1); 
             }
+
+            finalPath = completePath[finalPathIndex];
+
+            Debug.Log(finalPath.Count);
         }
 
-        private void Attack()
-        {
-
-        }
-
-        private void FixedUpdate()
+        private void GenerateOffset(int dir)
         {
             
             if(formation == Formation.Wait)
@@ -132,24 +132,22 @@ namespace UnityStandardAssets.Vehicles.Car
 
             if (leader)
             {
-                bool allInformation = true;
-                foreach (GameObject friend in friends)
+                List<Vector3> newSublist = new List<Vector3>();
+                for (int j = 0; j < completePath[i].Count; j++)
                 {
-                    if (!friend.GetComponent<CarAI5>().inFormation)
+                    Vector3 offset = Quaternion.AngleAxis(90 * dir, Vector3.up) * -direction * 2;
+                    newSublist.Add(completePath[i][j] + offset);
+                    if(j == completePath[i].Count - 1)
                     {
-                        allInformation = false;
-                        break;
-                    }
-                }
-
-                if (allInformation)
-                {
-                    foreach (GameObject friend in friends)
+                        if(i < completePath.Count - 1)
+                        {
+                            direction = completePath[i + 1][0] - completePath[i][j];
+                        }
+                    } else
                     {
                         friend.GetComponent<CarAI5>().formation = Formation.Attack;
                         friend.GetComponent<CarAI5>().crashTime = 1f;
                     }
-                    inFormation = false;
                 }
                 if (Vector3.Distance(m_Car.transform.position, finalPath[currentPathIndex]) < pathOffset &&
                     currentPathIndex < finalPath.Count - 1)
@@ -262,40 +260,22 @@ namespace UnityStandardAssets.Vehicles.Car
                 {
                     backingTimeSteps = 0;
 
-                    foreach (GameObject friend in friends)
-                    {
-                        CarAI5 friendAI = friend.GetComponent<CarAI5>();
-                        friendAI.formation = Formation.Drive;
-                        friendAI.inFormation = false;
-
-                    }
-                    return;
-                    
-                    
-                }
-               
-                return;
-            }
-
-            if (followPoint == null)
+        private void Stop()
+        {
+            if (Math.Abs(m_Car.GetComponent<Rigidbody>().velocity.magnitude) > EPSILON)
             {
-                return;
-            } else if(followPoint == Vector3.zero)
-            {
-                if(formation == Formation.Drive) Stop();
-                return;
+                m_Car.Move(0f, 0f, 0f, 1);
             }
+        }
 
+        private void Attack()
+        {
 
-            if(!leader)
-            {
-                if (Vector3.Distance(m_Car.transform.position, followPoint) < 1.5f)
-                {
-                    Stop();
-                    if (Math.Abs(m_Car.GetComponent<Rigidbody>().velocity.magnitude) < EPSILON) inFormation = true;
-                    return;
-                }
-            }
+        }
+
+        private void FixedUpdate()
+        {
+            Vector3 followPoint = finalPath[finalPath.Count - 1];
 
             if (!crashed)
             {
@@ -537,13 +517,16 @@ namespace UnityStandardAssets.Vehicles.Car
                 return;
             }
 
-            Transform leaderCar = transform;
-            foreach (GameObject friend in friends)
+            Gizmos.color = Color.red;
+            if (leader) Gizmos.color = Color.blue;
+
+            if (completePath == null) return;
+
+            foreach (List<Vector3> subPath in completePath)
             {
-                if (friend.GetComponent<CarAI5>().leader)
+                foreach (Vector3 position in subPath)
                 {
-                    leaderCar = friend.transform;
-                    break;
+                    Gizmos.DrawCube(position, Vector3.one);
                 }
             }
             Gizmos.color = Color.black;
