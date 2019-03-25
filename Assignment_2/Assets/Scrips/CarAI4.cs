@@ -73,7 +73,7 @@ namespace UnityStandardAssets.Vehicles.Car
             circularPattern = true;
 
             angle = 90;
-            spacing = circularPattern ? 50 : 20;
+            spacing = circularPattern ? 25 : 20;
 
 
             // note that both arrays will have holes when objects are destroyed
