@@ -20,7 +20,7 @@ namespace UnityStandardAssets.Vehicles.Car
         public Dictionary<String, Vector3> initial_positions;
         public List<Vector3> mscPath;
         private int currentPathIndex = 0;
-        private float distanceOffset = 10f;
+        private float distanceOffset = 11f;
         private List<Vector3> finalPath;
 
         public GameObject MSC;

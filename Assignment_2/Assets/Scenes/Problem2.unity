@@ -11577,7 +11577,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ed951abcb196b40f38b3699dfa82c76c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  terrain_filename: text/terrain2
+  terrain_filename: text/terrain2_new
   myInfo:
     file_name: 
     x_low: 0
@@ -54053,8 +54053,8 @@ MonoBehaviour:
   recompute: 0
   python_interpreter: C:\\Users\\Lenovo\\AppData\\Local\\Programs\\Python\\Python37\\python.exe
   python_folder: python_stuff
-  filename_problem: cost_matrix.txt
-  filename_solution: result_P2.txt
+  filename_problem: cost_matrix_P2_new.txt
+  filename_solution: solution_P2_new.txt
   script_name: run.py
   population_size: 10
   number_of_iterations: 10

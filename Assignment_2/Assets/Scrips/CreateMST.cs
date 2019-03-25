@@ -17,7 +17,9 @@ public class CreateMST : MonoBehaviour
     private int n_robots;
     private int gridNoX;
     private int gridNoZ;
+    private int numberOfGridCells;
     private int[] pathOf;
+    public int[][] cost_matrix;
 
     public GameObject terrain_manager_game_object;
     TerrainManager terrain_manager;
@@ -32,6 +34,7 @@ public class CreateMST : MonoBehaviour
         cells = new List<GraphNode>();
         gridNoX = terrain_manager.myInfo.x_N;
         gridNoZ = terrain_manager.myInfo.z_N;
+        this.numberOfGridCells = gridNoX * gridNoZ;
         n_robots = GameObject.FindGameObjectsWithTag("Player").Length;
         for (int i = 0; i < gridNoX; ++i)
         {
@@ -63,6 +66,7 @@ public class CreateMST : MonoBehaviour
                 }
             }
         }
+        InitCostMatrix();
         MSTs = MSTC();
         PrintPathOptimalityEvaluation();
         //PostProcessTrees();
@@ -341,12 +345,12 @@ public class CreateMST : MonoBehaviour
         // Initializiation
         pathOf = Enumerable.Repeat(-1, cells.Count).ToArray(); // Indicates to which robot's path a cell belongs to
 
-        //List<int[]> starting_positions = initStartingPositions();
-        List<int[]> starting_positions = new List<int[]> {
-            new int[] {8, 9},
-            new int[] {8, 10},
-            new int[] {8, 11}
-        };
+        List<int[]> starting_positions = initStartingPositions();
+        //List<int[]> starting_positions = new List<int[]> {
+        //    new int[] {8, 9},
+        //    new int[] {8, 10},
+        //    new int[] {8, 11}
+        //};
 
         // Returned value
         List<List<GraphNode>>[] all_trees = new List<List<GraphNode>>[n_robots];
@@ -371,6 +375,7 @@ public class CreateMST : MonoBehaviour
 
         for (int robot = 0; robot < n_robots; robot++)
         {
+            Debug.Log(string.Format("Robot: {0}, pos: ({1}, {2})", robot,  starting_positions[robot][0], starting_positions[robot][1]));
             GraphNode starting_node = GetGraphNode(starting_positions[robot][0], starting_positions[robot][1]);
 
             pathOf[Get1Dindex(starting_positions[robot][0], starting_positions[robot][1])] = robot;
@@ -395,6 +400,7 @@ public class CreateMST : MonoBehaviour
                     // Tree cannot be expanded anymore
                     continue;
                 }
+                Debug.Log("Expanding bot " + robot);
                 // For each remaining cell, pick the one farthest from other robots'paths
                 float best_min_dist = float.NegativeInfinity; // The bigger, the better
                 GraphNode best_node = null;
@@ -428,28 +434,60 @@ public class CreateMST : MonoBehaviour
 
     private List<int[]> initStartingPositions()
     {
-        List<int[]> very_initial_positions = new List<int[]>();
-
-        foreach (var car in GameObject.FindGameObjectsWithTag("Player"))
+        List<int[]> initialPositions = new List<int[]>();
+        int first_point= -1, second_point= -1, third_point = -1;
+        // 1st point:
+        // Take the point most distant from all the others
+        int max_sum = int.MinValue;
+        for (int row = 0; row < cost_matrix.Length; row++)
         {
-            Vector3 position = car.transform.position;
-            very_initial_positions.Add(
-                new int[] {terrain_manager.myInfo.get_i_index(position.x),
-                           terrain_manager.myInfo.get_j_index(position.z)}
-            );
+            if (cells[row].obstacle) continue;
+     
+            int sum = cost_matrix[row].Sum();
+            if (max_sum < sum)
+            {
+                max_sum = sum;
+                first_point = row;
+            }
+        }
+        initialPositions.Add(new int[] { cells[first_point].i , cells[first_point].j  });
+
+        // 2nd point:
+        // Take the point farthest from the 1st point
+        int max_distance = int.MinValue;
+        for (int col = 0; col < cost_matrix.Length; col++)
+        {
+            if (col == first_point) continue;
+            if (cells[col].obstacle) continue;
+
+            int distance = cost_matrix[first_point][col];
+            if (max_distance < distance)
+            {
+                max_distance = distance;
+                second_point = col;
+            }
+        }
+        initialPositions.Add(new int[] { cells[second_point].i, cells[second_point].j});
+
+        // 3rd point:
+        // Take the point farthest from the 1st point and the second point
+        max_distance = int.MinValue;
+        for (int row = 0; row < cost_matrix.Length; row++)
+        {
+            if (cells[row].obstacle) continue;
+            if (row == first_point || row == second_point) continue;
+            int distance = cost_matrix[row][first_point] + cost_matrix[row][second_point];
+
+            if (max_distance < distance)
+            {
+                max_distance = distance;
+                third_point = row;
+            }
+            initialPositions.Add(new int[] { cells[third_point].i, cells[third_point].j});
+
         }
 
-        List<int[]> initialFreePositions = new List<int[]>();
-        for (int i = 0; i < n_robots; i++)
-        {
-            int new_robot_position = FindClosestFreePosition(Get1Dindex(very_initial_positions[i][0], very_initial_positions[i][1]), i);
-            pathOf[new_robot_position] = i;
-            initialFreePositions.Add(
-                new int[] {cells[new_robot_position].i, cells[new_robot_position].j}
-            );
-            Debug.Log(string.Format("Car {0}: ({1}, {2})", i, cells[new_robot_position].i, cells[new_robot_position].j));
-        }
-        return initialFreePositions;
+        return initialPositions;
     }
 
     private bool AllAreEmpty(List<List<GraphNode>> remaining_for_robot)
@@ -825,6 +863,40 @@ public class CreateMST : MonoBehaviour
             }
         }
     }
+
+    private void InitCostMatrix()
+    {
+        cost_matrix = new int[numberOfGridCells][];
+
+        for (int starting_node = 0; starting_node < numberOfGridCells; starting_node++)
+        {
+            int i_starting_node = starting_node / gridNoZ;
+            int j_starting_node = starting_node % gridNoZ;
+
+            // Initialization
+            cost_matrix[starting_node] = Enumerable.Repeat(-1, numberOfGridCells).ToArray();
+            Queue<int> queue = new Queue<int>();
+
+            cost_matrix[starting_node][starting_node] = 0;
+            queue.Enqueue(starting_node);
+
+            while (queue.Count != 0)
+            {
+                int node = queue.Dequeue();
+
+                foreach (int neighbor_index in graph_indeces[node])
+                {
+                    if (cost_matrix[starting_node][neighbor_index] != -1)
+                    {
+                        continue;
+                    }
+                    cost_matrix[starting_node][neighbor_index] = cost_matrix[starting_node][node] + 1;
+                    queue.Enqueue(neighbor_index);
+                }
+            }
+        }
+    }
+
     private void OnDrawGizmos()
     {
         if(!Application.isPlaying)
@@ -845,6 +917,11 @@ public class CreateMST : MonoBehaviour
 
                 float x = terrain_manager.myInfo.get_x_pos(cells[i].i);
                 float z = terrain_manager.myInfo.get_z_pos(cells[i].j);
+
+                if (i == 0)
+                {
+                    Gizmos.DrawCube(new Vector3(x, 1, z), Vector3.one * 25);
+                }
 
                 for (int j = 0; j < MSTs[k][i].Count; ++j)
                 {

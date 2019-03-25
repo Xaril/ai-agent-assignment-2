@@ -4,6 +4,9 @@ from tqdm import tqdm
 import copy
 
 
+
+
+
 class Population:
 
     def __init__(self, population_size=50, adj=[], n_salesman=2):
@@ -84,8 +87,8 @@ class Population:
         for i in range(1, self.population_size):
             if self.population[i].score < best_chromosome.score:
                 best_chromosome = self.population[i]
-
-        if best_chromosome.score < self.best_absolute_score:
+        n_cities = sum([len(x) - 2 for x in best_chromosome.solution]) +1
+        if best_chromosome.score < self.best_absolute_score and n_cities == self.n_cities:
             self.best_absolute_score = best_chromosome.score
             self.best_absolute_chromosome = best_chromosome
 

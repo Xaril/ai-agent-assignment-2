@@ -8700,7 +8700,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fffafd711dc1dbc478a49705cfe1ce3d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  car: {fileID: 1056475041}
 --- !u!1 &887337577
 GameObject:
   m_ObjectHideFlags: 0
@@ -13791,7 +13790,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fffafd711dc1dbc478a49705cfe1ce3d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  car: {fileID: 292624256}
 --- !u!23 &960122553
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -21145,7 +21143,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ed951abcb196b40f38b3699dfa82c76c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  terrain_filename: text/terrain1
+  terrain_filename: text/terrain1_new
   myInfo:
     file_name: 
     x_low: 0
@@ -58463,7 +58461,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fffafd711dc1dbc478a49705cfe1ce3d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  car: {fileID: 1868622360}
 --- !u!23 &2086197325
 MeshRenderer:
   m_ObjectHideFlags: 0

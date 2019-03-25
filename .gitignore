@@ -35,3 +35,8 @@ sysinfo.txt
 # Builds
 *.apk
 *.unitypackage
+/Assignment_2/emergency_response_Data/GI/level0/23
+/Assignment_2/emergency_response_Data
+/Assignment_2/Mono
+*.dll
+*.exe
